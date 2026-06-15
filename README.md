@@ -6,7 +6,8 @@ Türkiye süt çiftlikleri için dijital ikiz platformu. 261 soruluk "Çiftlik A
 
 - **`anket-app/`** — ana uygulama (Node.js + Express + SQLite, Alpine.js + Tailwind, Vue 3 farm-engine web component). Kurulum ve deploy için bkz. [`anket-app/README.md`](anket-app/README.md) ve [`anket-app/DEPLOY.md`](anket-app/DEPLOY.md).
 - **`*.xlsx`** — anket + parametre kaynak dosyaları (`anket-app/scripts/extract.py` bunlardan `data/questions.json` üretir).
-- **`PROJECT_BRIEF.md`** — proje kapsamı/notları.
+- **[`STATUS.md`](STATUS.md)** — güncel durum: mimari, onboarding modeli, güvenlik, ne yapıldı / ne kaldı. **Önce burayı oku.**
+- **`PROJECT_BRIEF.md`** — ilk proje kapsamı/notları (tarihsel).
 
 ## Hızlı başlangıç (yerel)
 
