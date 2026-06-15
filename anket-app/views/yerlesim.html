@@ -1,0 +1,303 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Yerleşim Editörü — DairyMind™</title>
+  <link rel="stylesheet" href="/vendor/tailwind.css?v=20260614d" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+  <!-- farm-engine web component -->
+  <link rel="stylesheet" href="/farm-engine/farm-engine.css?v=20260614b" />
+  <script src="/farm-engine/farm-scene.js?v=20260614b" defer></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    [x-cloak] { display: none !important; }
+    .game-font { font-family: 'Fredoka', sans-serif; }
+    .stage-bg {
+      background:
+        radial-gradient(ellipse at 80% 10%, rgba(253, 224, 71, 0.4) 0%, transparent 50%),
+        linear-gradient(180deg, #bae6fd 0%, #7dd3fc 25%, #a7f3d0 55%, #86efac 75%, #65a30d 100%);
+    }
+    /* Invisible reference SVG — gives us getScreenCTM for exact coord mapping */
+    .ref-svg { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+    /* HTML drag handles (Alpine x-for works in HTML namespace, unlike SVG) */
+    .drag-handle {
+      position: absolute; transform: translate(-50%, -50%);
+      cursor: grab; user-select: none; touch-action: none;
+      display: flex; flex-direction: column; align-items: center;
+    }
+    .drag-handle:active { cursor: grabbing; }
+    .drag-dot {
+      width: 24px; height: 24px; border-radius: 50%;
+      background: rgba(220,38,38,0.92); border: 3px solid white;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.45);
+      display: flex; align-items: center; justify-content: center;
+      color: white; font-size: 11px; transition: background .12s, transform .12s;
+    }
+    .drag-handle:hover .drag-dot { background: #ea580c; }
+    .drag-handle.sel .drag-dot { background: #16a34a; transform: scale(1.2); }
+    .drag-label {
+      margin-top: 3px; white-space: nowrap; font-size: 10px; font-weight: 700;
+      background: rgba(15,23,42,0.85); color: white; padding: 1px 6px; border-radius: 6px;
+    }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+<div x-data="editor()" x-init="init()" x-cloak class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b-2 border-emerald-500 px-6 py-3 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-xl">🧩</div>
+      <div>
+        <div class="text-[10px] font-bold tracking-wider text-emerald-700 uppercase">DairyMind™ · Admin</div>
+        <div class="text-base font-bold text-slate-900 game-font">Çiftlik Yerleşim Editörü</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-2">
+      <span x-show="status" x-cloak class="text-xs font-bold" :class="status.includes('hata') || status.includes('Geçersiz') ? 'text-rose-600' : 'text-emerald-600'" x-text="status"></span>
+      <button @click="resetAll()" class="px-3 py-1.5 text-xs font-bold rounded-md bg-slate-200 text-slate-700 hover:bg-slate-300">↺ Varsayılana Dön</button>
+      <button @click="save()" :disabled="saving" class="px-4 py-1.5 text-xs font-bold rounded-md bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50">💾 Kaydet</button>
+    </div>
+  </header>
+
+  <!-- Token gate -->
+  <div x-show="!authed" x-cloak class="flex-1 flex items-center justify-center">
+    <div class="bg-white rounded-2xl shadow border p-6 max-w-sm w-full">
+      <h2 class="font-bold mb-2">Admin Girişi</h2>
+      <p class="text-sm text-slate-500 mb-4">Yerleşim düzenlemek için admin şifresi gerekli.</p>
+      <form @submit.prevent="login()" class="space-y-3">
+        <input x-model="token" type="password" placeholder="Şifre" class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-emerald-500 outline-none" />
+        <button type="submit" class="w-full py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700">Giriş</button>
+        <p x-show="loginErr" x-cloak class="text-sm text-rose-600" x-text="loginErr"></p>
+      </form>
+    </div>
+  </div>
+
+  <div x-show="authed" x-cloak class="flex-1 grid lg:grid-cols-[260px_1fr]">
+    <!-- Sidebar -->
+    <aside class="bg-white border-r border-slate-200 p-4 overflow-y-auto" style="max-height: calc(100vh - 58px);">
+      <div class="mb-3 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+        <div class="text-[11px] text-emerald-800 font-semibold leading-relaxed">
+          🖱️ <b>Kırmızı noktayı sürükle</b> → obje taşınır.<br/>
+          Listeden seç → X/Y ile ince ayar.<br/>
+          💾 Kaydet → tüm çiftçiler bu yerleşimi görür.
+        </div>
+      </div>
+      <div class="text-[10px] font-bold text-slate-400 uppercase tracking-wider mb-2">Objeler</div>
+      <div class="space-y-1">
+        <template x-for="z in zones" :key="z.key">
+          <button @click="selected = z.key"
+            :class="selected === z.key ? 'bg-emerald-50 border-emerald-300' : 'border-transparent hover:bg-slate-50'"
+            class="w-full text-left px-3 py-2 rounded-lg border flex items-center justify-between text-sm">
+            <span class="font-semibold text-slate-700" x-text="z.label"></span>
+            <span class="text-[10px] font-mono text-slate-400" x-text="`${Math.round(pos[z.key].x)},${Math.round(pos[z.key].y)}`"></span>
+          </button>
+        </template>
+      </div>
+      <div x-show="selected" x-cloak class="mt-4 p-3 rounded-xl bg-slate-50 border border-slate-200">
+        <div class="text-[11px] font-bold text-slate-600 mb-2" x-text="zoneLabel(selected)"></div>
+        <label class="block text-xs mb-2">X: <input type="number" :value="selected && pos[selected] ? Math.round(pos[selected].x) : 0" @input="selected && pos[selected] && (pos[selected].x = Number($event.target.value))" class="w-20 ml-1 px-2 py-1 rounded border border-slate-300"></label>
+        <label class="block text-xs">Y: <input type="number" :value="selected && pos[selected] ? Math.round(pos[selected].y) : 0" @input="selected && pos[selected] && (pos[selected].y = Number($event.target.value))" class="w-20 ml-1 px-2 py-1 rounded border border-slate-300"></label>
+      </div>
+    </aside>
+
+    <!-- Stage -->
+    <main class="relative overflow-hidden stage-bg" style="min-height: calc(100vh - 58px);">
+      <!-- Farm scene with ALL objects forced ON -->
+      <dm-farm-scene
+        :state="demoStateJson"
+        :layout="layoutJson"
+        style="display:block; width:100%; height:100%;"
+      ></dm-farm-scene>
+
+      <!-- Invisible reference SVG: same viewBox as scene → getScreenCTM gives exact mapping -->
+      <svg ref="svg" class="ref-svg" viewBox="0 0 900 620" preserveAspectRatio="xMidYMid meet"></svg>
+
+      <!-- HTML drag handles (Alpine x-for renders reliably in HTML namespace) -->
+      <div class="absolute inset-0">
+        <template x-for="z in zones" :key="z.key">
+          <div class="drag-handle" :class="selected === z.key ? 'sel' : ''"
+               :style="handleStyle(z.key)"
+               @pointerdown="startDrag(z.key, $event)">
+            <div class="drag-dot">✛</div>
+            <div class="drag-label" x-text="z.label"></div>
+          </div>
+        </template>
+      </div>
+    </main>
+  </div>
+</div>
+
+<script>
+function editor() {
+  return {
+    token: localStorage.getItem('dm_admin_token') || '',
+    authed: false,
+    loginErr: '',
+    saving: false,
+    status: '',
+    zones: [],            // [{key,label}]
+    pos: {},              // reactive {key:{x,y}}
+    defaults: {},
+    selected: null,
+    drag: null,
+    tick: 0,   // reactive bump → recompute handle pixel positions on resize
+
+    // Demo state: every object visible so all handles render
+    demoState: {
+      barn: 'free', parlor: 'robot', tank: 'large', silo: 'concrete',
+      energy: 'mixed', water: 'well', manure: 'biogas',
+      totalAreaDa: 150, farmAreaDa: 80, irrigation: true, cornSilageTon: 1200, feedStorageMonths: 6,
+      barnAreaM2: 1000, barnCapacity: 120, cooling: 'fan_shower', ventilation: 'mechanical', bedding: ['sand','rubber'],
+      tankCapacityL: 5000, tankShape: 'ibt', lighting: 'led', siloCapacityTon: 250, tmrMixer: true,
+      herdSize: 120, herd: { total: 120, milking: 80, dry: 15, heifer: 15, calf: 8, bull: 1, breed: 'simmental' },
+      workers: 6, annualMilkTon: 600, perCowKg: 28, feedingSystem: 'tmr', autoFeeder: true
+    },
+
+    get demoStateJson() { return JSON.stringify(this.demoState); },
+    get layoutJson() { return JSON.stringify(this.pos); },
+
+    async init() {
+      // Wait for web component global API
+      await this.waitForEngine();
+      const E = window.DMFarmEngine;
+      this.defaults = JSON.parse(JSON.stringify(E.ZONE_DEFAULTS));
+      // pos MUST be populated before zones, so x-for never reads undefined pos[key]
+      const p = {};
+      for (const k of E.EDITABLE_ZONES) p[k] = { ...this.defaults[k] };
+      this.pos = p;
+      this.zones = E.EDITABLE_ZONES.map(k => ({ key: k, label: E.ZONE_LABELS[k] || k }));
+
+      if (this.token) await this.login();
+    },
+
+    waitForEngine() {
+      return new Promise(resolve => {
+        const check = () => {
+          if (window.DMFarmEngine && window.customElements.get('dm-farm-scene')) resolve();
+          else setTimeout(check, 80);
+        };
+        check();
+      });
+    },
+
+    async login() {
+      this.loginErr = '';
+      try {
+        // verify token against admin endpoint
+        const r = await fetch(`/api/admin/submissions?token=${encodeURIComponent(this.token)}`);
+        if (r.status === 401) { this.loginErr = 'Geçersiz şifre'; return; }
+        localStorage.setItem('dm_admin_token', this.token);
+        this.authed = true;
+        // load saved layout
+        const lr = await fetch('/api/layout');
+        const ld = await lr.json();
+        if (ld.layout) {
+          for (const k in this.pos) {
+            if (ld.layout[k]) this.pos[k] = { x: ld.layout[k].x, y: ld.layout[k].y };
+          }
+        }
+        // Scene + ref-svg need a frame to size; bump tick a few times to place handles
+        this.$nextTick(() => {
+          [120, 400, 900, 1600].forEach(ms => setTimeout(() => this.tick++, ms));
+        });
+        window.addEventListener('resize', () => this.tick++);
+      } catch (e) { this.loginErr = 'Bağlantı hatası'; }
+    },
+
+    zoneLabel(k) { const z = this.zones.find(z => z.key === k); return z ? z.label : k; },
+
+    refSvg() { return document.querySelector('.ref-svg'); },
+
+    // SVG viewBox point → client pixel (via CTM). Used to place HTML handles.
+    svgToClientPx(vx, vy) {
+      this.tick; // reactive dep
+      const svg = this.refSvg();
+      if (!svg) return { left: 0, top: 0 };
+      const ctm = svg.getScreenCTM();
+      const host = svg.getBoundingClientRect();
+      if (!ctm) return { left: 0, top: 0 };
+      const pt = svg.createSVGPoint();
+      pt.x = vx; pt.y = vy;
+      const sp = pt.matrixTransform(ctm);          // → screen coords
+      return { left: sp.x - host.left, top: sp.y - host.top }; // → relative to overlay
+    },
+
+    handleStyle(key) {
+      const z = this.pos[key];
+      if (!z) return 'display:none;';
+      const p = this.svgToClientPx(z.x, z.y);
+      return `left:${p.left}px; top:${p.top}px;`;
+    },
+
+    // Client (mouse) point → SVG viewBox coords (via inverse CTM).
+    clientToSvg(clientX, clientY) {
+      const svg = this.refSvg();
+      const pt = svg.createSVGPoint();
+      pt.x = clientX; pt.y = clientY;
+      const ctm = svg.getScreenCTM();
+      if (!ctm) return { x: 0, y: 0 };
+      const p = pt.matrixTransform(ctm.inverse());
+      return { x: p.x, y: p.y };
+    },
+
+    startDrag(key, ev) {
+      ev.preventDefault();
+      this.selected = key;
+      // Offset between pointer and object center, so drag doesn't "jump"
+      const start = this.clientToSvg(ev.clientX, ev.clientY);
+      this.drag = { key, dx: this.pos[key].x - start.x, dy: this.pos[key].y - start.y };
+      const move = (e) => this.onDrag(e);
+      const up = () => {
+        window.removeEventListener('pointermove', move);
+        window.removeEventListener('pointerup', up);
+        this.drag = null;
+      };
+      window.addEventListener('pointermove', move);
+      window.addEventListener('pointerup', up);
+    },
+
+    onDrag(ev) {
+      if (!this.drag) return;
+      const { key, dx, dy } = this.drag;
+      const p = this.clientToSvg(ev.clientX, ev.clientY);
+      let nx = Math.round(p.x + dx);
+      let ny = Math.round(p.y + dy);
+      nx = Math.max(-200, Math.min(900, nx));
+      ny = Math.max(0, Math.min(620, ny));
+      this.pos[key].x = nx;
+      this.pos[key].y = ny;
+    },
+
+    resetAll() {
+      for (const k in this.pos) this.pos[k] = { ...this.defaults[k] };
+      this.status = 'Varsayılana dönüldü (kaydetmeyi unutma)';
+      setTimeout(() => this.status = '', 2500);
+    },
+
+    async save() {
+      this.saving = true; this.status = '';
+      try {
+        const r = await fetch(`/api/layout?token=${encodeURIComponent(this.token)}`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ layout: this.pos })
+        });
+        const d = await r.json();
+        if (!r.ok) throw new Error(d.error || 'Hata');
+        this.status = `✓ Kaydedildi (${d.count} obje)`;
+      } catch (e) {
+        this.status = 'Kayıt hatası: ' + e.message;
+      } finally {
+        this.saving = false;
+        setTimeout(() => { if (this.status.startsWith('✓')) this.status = ''; }, 3000);
+      }
+    }
+  };
+}
+</script>
+</body>
+</html>

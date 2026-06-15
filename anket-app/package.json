@@ -1,0 +1,20 @@
+{
+  "name": "dairymind-anket",
+  "version": "1.0.0",
+  "description": "DairyMind farm survey web app",
+  "type": "commonjs",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "extract": "python scripts/extract.py",
+    "export": "node scripts/export-submissions.js"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "express": "^4.21.0",
+    "nanoid": "^3.3.7"
+  }
+}

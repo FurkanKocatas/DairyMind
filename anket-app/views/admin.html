@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Admin — DairyMind™</title>
+  <link rel="stylesheet" href="/vendor/tailwind.css?v=20260614d" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <script src="/validators.js"></script>
+  <style>body{font-family:'Inter',system-ui,sans-serif}[x-cloak]{display:none!important}</style>
+</head>
+<body class="bg-slate-100 min-h-screen antialiased text-slate-800">
+  <div x-data="admin()" x-init="init()" class="max-w-6xl mx-auto px-4 md:px-6 py-8">
+    <header class="flex items-center justify-between mb-6">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-slate-700 to-slate-900 flex items-center justify-center text-white">🔧</div>
+        <div>
+          <div class="text-[10px] font-semibold tracking-wider text-slate-500 uppercase">DairyMind™ Admin</div>
+          <div class="text-lg font-bold text-slate-900">Anket Yönetimi</div>
+        </div>
+      </div>
+      <a href="/" class="text-sm text-slate-500 hover:text-slate-700">← Ana Sayfa</a>
+    </header>
+
+    <!-- Token form -->
+    <div x-show="!loaded" x-cloak class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6 max-w-md">
+      <h2 class="font-bold mb-2">Admin Girişi</h2>
+      <p class="text-sm text-slate-500 mb-4">Yönetici şifresi gerekli.</p>
+      <form @submit.prevent="login()" class="space-y-3">
+        <input x-model="token" type="password" placeholder="Şifre" autocomplete="current-password"
+          class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-slate-500 outline-none" />
+        <button type="submit" class="w-full py-2.5 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition">Giriş</button>
+        <p x-show="loginError" x-cloak class="text-sm text-rose-600" x-text="loginError"></p>
+      </form>
+    </div>
+
+    <template x-if="loaded">
+      <div>
+        <div class="grid sm:grid-cols-3 gap-4 mb-6">
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Toplam Başvuru</div>
+            <div class="text-3xl font-extrabold mt-2" x-text="submissions.length"></div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Tamamlanan</div>
+            <div class="text-3xl font-extrabold mt-2 text-emerald-600" x-text="submissions.filter(s=>s.completed_at).length"></div>
+          </div>
+          <div class="bg-white rounded-2xl p-5 border border-slate-200 shadow-sm">
+            <div class="text-xs text-slate-500 font-semibold uppercase tracking-wider">Devam Eden</div>
+            <div class="text-3xl font-extrabold mt-2 text-amber-600" x-text="submissions.filter(s=>!s.completed_at).length"></div>
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button @click="openNew()" class="px-4 py-2 rounded-lg bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 shadow-sm">+ Yeni Çiftçi Ekle</button>
+          <a href="/yerlesim" class="px-4 py-2 rounded-lg bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700">🧩 Yerleşim Editörü</a>
+          <a :href="`/api/admin/export?token=${encodeURIComponent(token)}`" class="px-4 py-2 rounded-lg bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800">↓ JSON Export</a>
+          <a :href="`/api/admin/export.csv?token=${encodeURIComponent(token)}`" class="px-4 py-2 rounded-lg bg-sky-600 text-white text-sm font-semibold hover:bg-sky-700">↓ CSV Export</a>
+          <button @click="refresh()" class="px-4 py-2 rounded-lg bg-white border border-slate-300 text-sm font-semibold hover:bg-slate-50">↻ Yenile</button>
+        </div>
+
+        <div class="bg-white rounded-2xl border border-slate-200 shadow-sm overflow-hidden">
+          <table class="w-full text-sm">
+            <thead class="bg-slate-50 text-xs uppercase tracking-wider text-slate-500">
+              <tr>
+                <th class="px-4 py-3 text-left">Çiftçi</th>
+                <th class="px-4 py-3 text-left">Çiftlik</th>
+                <th class="px-4 py-3 text-left">Telefon</th>
+                <th class="px-4 py-3 text-right">Cevap</th>
+                <th class="px-4 py-3 text-left">Son Güncelleme</th>
+                <th class="px-4 py-3 text-left">Durum</th>
+                <th class="px-4 py-3 text-left">Eylemler</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-slate-100">
+              <template x-for="s in submissions" :key="s.id">
+                <tr class="hover:bg-slate-50">
+                  <td class="px-4 py-3">
+                    <div class="font-semibold" x-text="s.farmer_name"></div>
+                    <div class="text-[11px] text-slate-400" x-text="s.city || '-'"></div>
+                  </td>
+                  <td class="px-4 py-3" x-text="s.farm_name"></td>
+                  <td class="px-4 py-3 text-slate-500 font-mono text-xs" x-text="s.phone"></td>
+                  <td class="px-4 py-3 text-right">
+                    <div class="font-mono font-semibold" x-text="`${s.answer_count}/261`"></div>
+                    <div class="text-[10px] text-slate-400" x-text="`%${Math.round(s.answer_count/261*100)}`"></div>
+                  </td>
+                  <td class="px-4 py-3 text-xs text-slate-500" x-text="formatDate(s.updated_at)"></td>
+                  <td class="px-4 py-3">
+                    <span x-show="s.completed_at" class="text-[10px] font-bold px-2 py-1 rounded-md bg-emerald-100 text-emerald-700">TAMAMLANDI</span>
+                    <span x-show="!s.completed_at" class="text-[10px] font-bold px-2 py-1 rounded-md bg-amber-100 text-amber-700">DEVAM EDİYOR</span>
+                  </td>
+                  <td class="px-4 py-3">
+                    <div class="flex gap-1.5">
+                      <button @click="copyLink(s.id, s.access_token)" title="Linki kopyala"
+                        class="px-2 py-1 rounded-md bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition">
+                        🔗
+                      </button>
+                      <a :href="whatsappLink(s)" target="_blank" title="WhatsApp ile gönder"
+                        class="px-2 py-1 rounded-md bg-emerald-100 hover:bg-emerald-200 text-emerald-700 text-xs font-semibold transition">
+                        📱
+                      </a>
+                      <a :href="anketUrl(s.id, s.access_token)" target="_blank" title="Anketi aç"
+                        class="px-2 py-1 rounded-md bg-sky-100 hover:bg-sky-200 text-sky-700 text-xs font-semibold transition">
+                        👁
+                      </a>
+                    </div>
+                  </td>
+                </tr>
+              </template>
+              <tr x-show="!submissions.length">
+                <td colspan="7" class="px-4 py-12 text-center text-slate-400">Henüz başvuru yok.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- Copy notification -->
+        <div x-show="copyMsg" x-cloak
+          x-transition.opacity
+          class="fixed bottom-6 right-6 bg-slate-900 text-white text-sm px-4 py-3 rounded-xl shadow-lg z-50"
+          x-text="copyMsg"></div>
+
+        <!-- New farmer modal -->
+        <div x-show="showNew" x-cloak x-transition.opacity
+          class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+          @click.self="closeNew()">
+          <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 md:p-8" x-transition>
+            <div class="flex items-start justify-between mb-4">
+              <div>
+                <h2 class="text-xl font-bold text-slate-900">+ Yeni Çiftçi Ekle</h2>
+                <p class="text-sm text-slate-500 mt-0.5">Anket linki otomatik oluşturulur, WhatsApp ile gönderebilirsin.</p>
+              </div>
+              <button @click="closeNew()" class="text-slate-400 hover:text-slate-700 text-xl leading-none">×</button>
+            </div>
+
+            <form @submit.prevent="createFarmer()" novalidate class="space-y-4">
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Ad Soyad *</label>
+                <input x-model="newForm.farmer_name" type="text" maxlength="80" placeholder="Örn: Ahmet Yılmaz"
+                  @blur="newTouched.farmer_name=true; validateNew('farmer_name')"
+                  @input="newTouched.farmer_name && validateNew('farmer_name')"
+                  :class="newErrors.farmer_name && newTouched.farmer_name ? 'border-rose-400' : 'border-slate-300 focus:border-emerald-500'"
+                  class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-100 outline-none transition" />
+                <p x-show="newErrors.farmer_name && newTouched.farmer_name" x-cloak class="text-xs text-rose-600 mt-1" x-text="newErrors.farmer_name"></p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Çiftlik Adı *</label>
+                <input x-model="newForm.farm_name" type="text" maxlength="100" placeholder="Örn: Yılmaz Süt Çiftliği"
+                  @blur="newTouched.farm_name=true; validateNew('farm_name')"
+                  @input="newTouched.farm_name && validateNew('farm_name')"
+                  :class="newErrors.farm_name && newTouched.farm_name ? 'border-rose-400' : 'border-slate-300 focus:border-emerald-500'"
+                  class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-100 outline-none transition" />
+                <p x-show="newErrors.farm_name && newTouched.farm_name" x-cloak class="text-xs text-rose-600 mt-1" x-text="newErrors.farm_name"></p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Telefon *</label>
+                <input x-model="newForm.phone" type="tel" maxlength="20" placeholder="05XX XXX XX XX" inputmode="tel"
+                  @blur="newTouched.phone=true; newForm.phone=window.DMValidators.normalizePhoneTR(newForm.phone); validateNew('phone')"
+                  @input="newTouched.phone && validateNew('phone')"
+                  :class="newErrors.phone && newTouched.phone ? 'border-rose-400' : 'border-slate-300 focus:border-emerald-500'"
+                  class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-100 outline-none transition" />
+                <p x-show="newErrors.phone && newTouched.phone" x-cloak class="text-xs text-rose-600 mt-1" x-text="newErrors.phone"></p>
+                <p x-show="!newErrors.phone || !newTouched.phone" class="text-xs text-slate-400 mt-1">WhatsApp linki bu numaraya gönderilecek</p>
+              </div>
+
+              <div>
+                <label class="block text-sm font-semibold text-slate-700 mb-1.5">Şehir <span class="text-slate-400 font-normal">(opsiyonel)</span></label>
+                <select x-model="newForm.city"
+                  class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition bg-white">
+                  <option value="">— İl seçin —</option>
+                  <template x-for="p in provinces" :key="p.name">
+                    <option :value="p.name" x-text="p.name"></option>
+                  </template>
+                </select>
+              </div>
+
+              <div x-show="newServerError" x-cloak class="text-sm text-rose-700 bg-rose-50 border border-rose-200 px-3 py-2 rounded-lg" x-text="newServerError"></div>
+
+              <div class="flex gap-2 pt-2">
+                <button type="button" @click="closeNew()"
+                  class="flex-1 py-2.5 rounded-lg bg-slate-100 text-slate-700 font-semibold hover:bg-slate-200 transition">İptal</button>
+                <button type="submit" :disabled="newLoading || !isNewValid()"
+                  class="flex-1 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition disabled:opacity-50 disabled:cursor-not-allowed">
+                  <span x-show="!newLoading">Oluştur & Link Al</span>
+                  <span x-show="newLoading" x-cloak>Oluşturuluyor...</span>
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+
+        <!-- Success modal (after create) -->
+        <div x-show="showSuccess" x-cloak x-transition.opacity
+          class="fixed inset-0 z-40 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-4"
+          @click.self="closeSuccess()">
+          <div class="bg-white rounded-2xl shadow-2xl max-w-lg w-full p-6 md:p-8 text-center" x-transition>
+            <div class="w-16 h-16 mx-auto rounded-full bg-emerald-100 flex items-center justify-center text-3xl mb-3">✓</div>
+            <h2 class="text-xl font-bold text-slate-900 mb-1">Çiftçi eklendi</h2>
+            <p class="text-sm text-slate-500 mb-5">
+              <strong x-text="created?.farmer_name"></strong> için anket linki hazır.
+            </p>
+
+            <div class="bg-slate-50 border border-slate-200 rounded-xl p-3 mb-4 text-left">
+              <div class="text-xs text-slate-500 font-semibold mb-1">ANKET URL</div>
+              <div class="text-xs font-mono text-slate-700 break-all" x-text="anketUrl(created?.id, created?.access_token)"></div>
+            </div>
+            <p class="text-[11px] text-slate-400 mb-3 text-left">Çiftçi linki ilk açtığında KVKK onayı isteyecek, sonra ankete başlar. Link kaldığı yerden devam ettirir.</p>
+
+            <div class="flex flex-col sm:flex-row gap-2">
+              <button @click="copyLink(created?.id, created?.access_token); closeSuccess()"
+                class="flex-1 py-2.5 rounded-lg bg-slate-900 text-white font-semibold hover:bg-slate-800 transition">
+                🔗 Linki Kopyala
+              </button>
+              <a :href="whatsappLink(created)" target="_blank" @click="closeSuccess()"
+                class="flex-1 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 transition">
+                📱 WhatsApp ile Gönder
+              </a>
+            </div>
+            <button @click="closeSuccess()" class="mt-3 text-xs text-slate-400 hover:text-slate-600">Kapat</button>
+          </div>
+        </div>
+      </div>
+    </template>
+  </div>
+
+  <script>
+    function admin() {
+      return {
+        token: localStorage.getItem('dm_admin_token') || '',
+        loaded: false,
+        loginError: '',
+        submissions: [],
+        copyMsg: '',
+        provinces: [],
+        // new-farmer modal state
+        showNew: false,
+        showSuccess: false,
+        created: null,
+        newForm: { farmer_name: '', farm_name: '', phone: '', city: '' },
+        newErrors: {},
+        newTouched: {},
+        newLoading: false,
+        newServerError: '',
+        async init() {
+          // Load provinces (public endpoint, no token)
+          try {
+            const pr = await fetch('/api/provinces');
+            const pd = await pr.json();
+            this.provinces = pd.provinces || [];
+          } catch {}
+          if (this.token) await this.login();
+        },
+        async login() {
+          this.loginError = '';
+          try {
+            const r = await fetch(`/api/admin/submissions?token=${encodeURIComponent(this.token)}`);
+            if (r.status === 401) { this.loginError = 'Geçersiz token'; return; }
+            if (!r.ok) throw new Error('Hata');
+            const d = await r.json();
+            this.submissions = d.submissions;
+            localStorage.setItem('dm_admin_token', this.token);
+            this.loaded = true;
+          } catch (e) { this.loginError = e.message; }
+        },
+        async refresh() { await this.login(); },
+
+        openNew() {
+          this.newForm = { farmer_name: '', farm_name: '', phone: '', city: '' };
+          this.newErrors = {};
+          this.newTouched = {};
+          this.newServerError = '';
+          this.showNew = true;
+        },
+        closeNew() { this.showNew = false; },
+        closeSuccess() { this.showSuccess = false; this.created = null; },
+
+        validateNew(field) {
+          const v = this.newForm[field];
+          if (field === 'farmer_name') {
+            const s = (v || '').trim();
+            if (s.length < 2) { this.newErrors.farmer_name = 'En az 2 harf olmalı'; return; }
+            if (!/[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(s)) { this.newErrors.farmer_name = 'Geçerli isim yazın'; return; }
+            delete this.newErrors.farmer_name;
+          }
+          if (field === 'farm_name') {
+            const s = (v || '').trim();
+            if (s.length < 2) { this.newErrors.farm_name = 'En az 2 karakter'; return; }
+            delete this.newErrors.farm_name;
+          }
+          if (field === 'phone') {
+            if (!window.DMValidators.isValidPhoneTR(v)) {
+              this.newErrors.phone = 'Geçersiz telefon (05XX XXX XX XX)';
+              return;
+            }
+            delete this.newErrors.phone;
+          }
+        },
+
+        isNewValid() {
+          const f = this.newForm;
+          const n = (f.farmer_name || '').trim();
+          const fn = (f.farm_name || '').trim();
+          return n.length >= 2 && /[a-zA-ZçğıöşüÇĞİÖŞÜ]/.test(n) &&
+                 fn.length >= 2 &&
+                 window.DMValidators.isValidPhoneTR(f.phone);
+        },
+
+        async createFarmer() {
+          this.newTouched.farmer_name = true;
+          this.newTouched.farm_name = true;
+          this.newTouched.phone = true;
+          this.validateNew('farmer_name');
+          this.validateNew('farm_name');
+          this.validateNew('phone');
+          this.newServerError = '';
+          if (Object.keys(this.newErrors).length > 0) return;
+
+          this.newLoading = true;
+          try {
+            // Admin pre-creates the survey (no consent yet — farmer accepts KVKK on first open)
+            const r = await fetch('/api/admin/invite', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json', 'x-admin-token': this.token },
+              body: JSON.stringify(this.newForm)
+            });
+            const d = await r.json();
+            if (!r.ok) throw new Error(d.error || 'Oluşturulamadı');
+            this.created = {
+              id: d.id,
+              access_token: d.access_token,
+              farmer_name: d.farmer_name,
+              farm_name: d.farm_name,
+              phone: d.phone,
+              answer_count: 0
+            };
+            this.showNew = false;
+            this.showSuccess = true;
+            await this.refresh();
+          } catch (e) {
+            this.newServerError = e.message;
+          } finally {
+            this.newLoading = false;
+          }
+        },
+        formatDate(s) {
+          if (!s) return '-';
+          const d = new Date(s.replace(' ', 'T') + 'Z');
+          return d.toLocaleString('tr-TR', { dateStyle: 'short', timeStyle: 'short' });
+        },
+
+        anketUrl(id, token) {
+          // Magic link: token in URL so the farmer (or admin) can open without prior localStorage
+          const base = `${window.location.origin}/anket/${id}`;
+          return token ? `${base}?t=${encodeURIComponent(token)}` : base;
+        },
+
+        async copyLink(id, token) {
+          const url = this.anketUrl(id, token);
+          try {
+            await navigator.clipboard.writeText(url);
+            this.copyMsg = `✓ Link kopyalandı: ${url}`;
+          } catch {
+            // Fallback
+            const ta = document.createElement('textarea');
+            ta.value = url; document.body.appendChild(ta); ta.select();
+            document.execCommand('copy'); document.body.removeChild(ta);
+            this.copyMsg = `✓ Link kopyalandı`;
+          }
+          setTimeout(() => this.copyMsg = '', 2500);
+        },
+
+        whatsappLink(s) {
+          const url = this.anketUrl(s.id, s.access_token);
+          const text = `Merhaba ${s.farmer_name}, DairyMind çiftlik anketinize devam edebilirsiniz:\n\n${url}\n\nKaldığınız yerden otomatik devam eder. Mevcut ilerleme: ${s.answer_count}/261 cevap.`;
+          // Format phone for wa.me: must be country-code + number, no plus, no leading 0
+          let p = String(s.phone || '').replace(/\D/g, '');
+          if (p.startsWith('0')) p = '90' + p.slice(1);
+          else if (!p.startsWith('90') && p.length === 10) p = '90' + p;
+          return `https://wa.me/${p}?text=${encodeURIComponent(text)}`;
+        }
+      }
+    }
+  </script>
+</body>
+</html>

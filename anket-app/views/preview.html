@@ -1,0 +1,1010 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>🧪 Preview — DairyMind Dijital İkiz Test</title>
+  <link rel="stylesheet" href="/vendor/tailwind.css?v=20260614d" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+  <script src="/farm-mapper.js"></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    [x-cloak] { display: none !important; }
+    .game-font { font-family: 'Fredoka', sans-serif; }
+    .farm-bg {
+      background:
+        radial-gradient(ellipse at 80% 10%, rgba(253, 224, 71, 0.4) 0%, transparent 50%),
+        linear-gradient(180deg, #bae6fd 0%, #7dd3fc 25%, #a7f3d0 55%, #86efac 75%, #65a30d 100%);
+    }
+    .pop-in { animation: popIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center bottom; }
+    @keyframes popIn {
+      0%   { opacity: 0; transform: translateY(40px) scale(0.4) rotate(-4deg); }
+      55%  { opacity: 1; transform: translateY(-6px) scale(1.06) rotate(1.5deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+    }
+    .cow-bob { animation: cowBob 3s ease-in-out infinite; }
+    @keyframes cowBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+    .cow-walk-iso { animation: cowWalkIso 13s ease-in-out infinite; }
+    @keyframes cowWalkIso {
+      0%   { transform: translate(0, 0); }
+      45%  { transform: translate(70px, 38px); }
+      50%  { transform: translate(70px, 38px) scaleX(-1); }
+      95%  { transform: translate(0, 0) scaleX(-1); }
+      100% { transform: translate(0, 0); }
+    }
+    .spin-slow { animation: spinIt 5s linear infinite; transform-origin: center; transform-box: fill-box; }
+    @keyframes spinIt { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .pulse-soft { animation: pulseSoft 2.5s ease-in-out infinite; }
+    @keyframes pulseSoft { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+    .smoke { animation: smokeRise 4.5s ease-in-out infinite; }
+    @keyframes smokeRise {
+      0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+      30%  { opacity: 0.7; }
+      100% { opacity: 0; transform: translateY(-35px) scale(1.5); }
+    }
+    .sun-rays { animation: sunPulse 4s ease-in-out infinite; transform-origin: center; }
+    @keyframes sunPulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.13); opacity: 1; } }
+    .cloud-drift { animation: cloudDrift 60s linear infinite; }
+    @keyframes cloudDrift { from { transform: translateX(-100px); } to { transform: translateX(900px); } }
+    .ctl-section { @apply border-l-4 border-emerald-400 pl-3 py-1 mb-2 mt-3; }
+  </style>
+</head>
+<body class="bg-slate-100 min-h-screen text-slate-800">
+
+<div x-data="preview()" x-init="init()" x-cloak class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b-2 border-amber-400 px-6 py-3 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-amber-400 to-orange-600 flex items-center justify-center text-white text-xl">🧪</div>
+      <div>
+        <div class="text-[10px] font-bold tracking-wider text-amber-700 uppercase">DEV PREVIEW</div>
+        <div class="text-base font-bold text-slate-900 game-font">Dijital İkiz Test Sandbox</div>
+      </div>
+    </div>
+    <div class="flex items-center gap-3">
+      <span class="text-[10px] font-bold px-2 py-1 rounded bg-amber-100 text-amber-700">BATCH 1</span>
+      <span class="text-xs text-slate-500"><span x-text="builtCount"></span>/8 yapı + <span x-text="extraCount"></span> ek</span>
+      <button @click="copyState()" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-md hover:bg-slate-100">📋 State Kopyala</button>
+      <a href="/" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-md hover:bg-slate-100">Ana sayfa</a>
+    </div>
+  </header>
+
+  <div class="flex-1 grid lg:grid-cols-[380px_1fr] gap-0">
+
+    <!-- Controls Sidebar -->
+    <aside class="bg-white border-r border-slate-200 p-4 overflow-y-auto" style="max-height: calc(100vh - 60px);">
+
+      <!-- Action buttons -->
+      <div class="flex gap-2 mb-4">
+        <button @click="reset()" class="flex-1 py-2 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold">↻ Sıfırla</button>
+        <button @click="demoFill()" class="flex-1 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold">✨ Tüm Demo</button>
+      </div>
+
+      <!-- Active batches banner -->
+      <div class="mb-3 p-3 rounded-xl bg-amber-50 border border-amber-300">
+        <div class="text-[10px] font-bold text-amber-800 uppercase tracking-wider game-font">📦 Aktif Batch'ler</div>
+        <div class="text-sm font-bold text-amber-900 mt-0.5">Batch 1 ✓ · Batch 2 ✓ · Batch 3 🆕</div>
+        <div class="text-[11px] text-amber-700 mt-1">B3: 3.2·3.3·3.4·3.5·3.6 (sürü grupları)</div>
+      </div>
+
+      <!-- BATCH 1: ARAZİ -->
+      <details open class="mb-3">
+        <summary class="cursor-pointer text-xs font-bold text-emerald-700 uppercase tracking-wider game-font px-2 py-1 bg-emerald-50 rounded-md">🌾 Batch 1 — Arazi & Tarla</summary>
+        <div class="mt-3 space-y-3 pl-2">
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>2.1 Toplam arazi (dönüm)</span>
+              <span class="font-mono font-bold text-emerald-700" x-text="state.totalAreaDa"></span>
+            </label>
+            <input type="range" min="0" max="500" step="10" x-model.number="state.totalAreaDa" class="w-full accent-emerald-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>2.4 Yem üretim arazisi (dönüm)</span>
+              <span class="font-mono font-bold text-emerald-700" x-text="state.farmAreaDa"></span>
+            </label>
+            <input type="range" min="0" max="200" step="5" x-model.number="state.farmAreaDa" class="w-full accent-emerald-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>6.4 Mısır silajı (ton/yıl)</span>
+              <span class="font-mono font-bold text-emerald-700" x-text="state.cornSilageTon"></span>
+            </label>
+            <input type="range" min="0" max="3000" step="50" x-model.number="state.cornSilageTon" class="w-full accent-emerald-600 mt-1" />
+          </div>
+
+          <label class="flex items-center gap-2 cursor-pointer px-2 py-1.5 rounded-md hover:bg-emerald-50">
+            <input type="checkbox" x-model="state.irrigation" class="w-4 h-4 accent-emerald-600" />
+            <span class="text-xs font-semibold text-slate-700">2.5 Sulama aktif (sprinkler)</span>
+          </label>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>6.19 Yem deposu (ay)</span>
+              <span class="font-mono font-bold text-emerald-700" x-text="state.feedStorageMonths"></span>
+            </label>
+            <input type="range" min="0" max="12" step="1" x-model.number="state.feedStorageMonths" class="w-full accent-emerald-600 mt-1" />
+          </div>
+        </div>
+      </details>
+
+      <!-- BATCH 2: AHIR DETAYLARI -->
+      <details open class="mb-3">
+        <summary class="cursor-pointer text-xs font-bold text-amber-700 uppercase tracking-wider game-font px-2 py-1 bg-amber-50 rounded-md">🏠 Batch 2 — Ahır Detayları</summary>
+        <div class="mt-3 space-y-3 pl-2">
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>2.8 Ahır alanı (m²)</span>
+              <span class="font-mono font-bold text-amber-700" x-text="state.barnAreaM2"></span>
+            </label>
+            <input type="range" min="0" max="3000" step="50" x-model.number="state.barnAreaM2" class="w-full accent-amber-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>2.9 Ahır kapasitesi (baş)</span>
+              <span class="font-mono font-bold text-amber-700" x-text="state.barnCapacity"></span>
+            </label>
+            <input type="range" min="0" max="500" step="5" x-model.number="state.barnCapacity" class="w-full accent-amber-600 mt-1" />
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">2.12 Soğutma sistemi</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'fan',l:'Fan'},{id:'shower',l:'Duş'},{id:'fan_shower',l:'Fan+Duş'},{id:'natural',l:'Doğal'}]" :key="o.l">
+                <button @click="state.cooling = o.id"
+                  :class="state.cooling === o.id ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">2.15 Havalandırma</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'natural',l:'Doğal'},{id:'mechanical',l:'Mekanik'},{id:'hybrid',l:'Karma'}]" :key="o.l">
+                <button @click="state.ventilation = o.id"
+                  :class="state.ventilation === o.id ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">2.16 Yataklık (çoklu)</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:'straw',l:'Saman'},{id:'sand',l:'Kum'},{id:'sawdust',l:'Talaş'},{id:'rubber',l:'Lastik'},{id:'waterbed',l:'Waterbed'},{id:'compost',l:'Kompost'}]" :key="o.id">
+                <button @click="toggleBed(o.id)"
+                  :class="state.bedding.includes(o.id) ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- ANA YAPILAR -->
+      <details class="mb-3">
+        <summary class="cursor-pointer text-xs font-bold text-sky-700 uppercase tracking-wider game-font px-2 py-1 bg-sky-50 rounded-md">🏠 Mevcut — Ana Yapılar</summary>
+        <div class="mt-3 space-y-3 pl-2">
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">Ahır Tipi</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'free',l:'Serbest'},{id:'tie',l:'Bağlı'},{id:'open',l:'Açık'}]" :key="o.l">
+                <button @click="state.barn = o.id"
+                  :class="state.barn === o.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">Sağım Sistemi</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'herringbone',l:'Klasik'},{id:'rotary',l:'Karusel'},{id:'robot',l:'Robot'}]" :key="o.l">
+                <button @click="state.parlor = o.id"
+                  :class="state.parlor === o.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">Süt Tankı</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'small',l:'500L'},{id:'medium',l:'2000L'},{id:'large',l:'5000L+'}]" :key="o.l">
+                <button @click="state.tank = o.id"
+                  :class="state.tank === o.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">Silaj</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'concrete',l:'Beton'},{id:'pile',l:'Yığın'},{id:'bale',l:'Balya'}]" :key="o.l">
+                <button @click="state.silo = o.id"
+                  :class="state.silo === o.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">Enerji</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'grid',l:'Şebeke'},{id:'solar',l:'Güneş'},{id:'mixed',l:'Karma'}]" :key="o.l">
+                <button @click="state.energy = o.id"
+                  :class="state.energy === o.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">Su Kaynağı</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'well',l:'Kuyu'},{id:'pond',l:'Gölet'},{id:'mains',l:'Şebeke'}]" :key="o.l">
+                <button @click="state.water = o.id"
+                  :class="state.water === o.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">Atık / Gübre</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'Yok'},{id:'lagoon',l:'Lagün'},{id:'compost',l:'Kompost'},{id:'biogas',l:'Biyogaz'}]" :key="o.l">
+                <button @click="state.manure = o.id"
+                  :class="state.manure === o.id ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- SÜRÜ -->
+      <details open class="mb-3">
+        <summary class="cursor-pointer text-xs font-bold text-rose-700 uppercase tracking-wider game-font px-2 py-1 bg-rose-50 rounded-md">🐄 Sürü (Batch 3)</summary>
+        <div class="mt-3 space-y-3 pl-2">
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>3.1 Toplam baş</span>
+              <span class="font-mono font-bold text-rose-700" x-text="state.herdSize"></span>
+            </label>
+            <input type="range" min="0" max="500" step="5" x-model.number="state.herdSize" class="w-full accent-rose-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>🥛 3.2 Sağmal</span>
+              <span class="font-mono font-bold text-emerald-700" x-text="state.milkingCount"></span>
+            </label>
+            <input type="range" min="0" max="300" step="1" x-model.number="state.milkingCount" class="w-full accent-emerald-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>💤 3.3 Kuru dönem</span>
+              <span class="font-mono font-bold text-amber-700" x-text="state.dryCount"></span>
+            </label>
+            <input type="range" min="0" max="100" step="1" x-model.number="state.dryCount" class="w-full accent-amber-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>🐂 3.4 Düve</span>
+              <span class="font-mono font-bold text-amber-700" x-text="state.heiferCount"></span>
+            </label>
+            <input type="range" min="0" max="100" step="1" x-model.number="state.heiferCount" class="w-full accent-amber-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>🍼 3.5 Buzağı</span>
+              <span class="font-mono font-bold text-sky-700" x-text="state.calfCount"></span>
+            </label>
+            <input type="range" min="0" max="100" step="1" x-model.number="state.calfCount" class="w-full accent-sky-600 mt-1" />
+          </div>
+
+          <div>
+            <label class="text-[11px] font-semibold text-slate-600 flex justify-between">
+              <span>♂ 3.6 Boğa</span>
+              <span class="font-mono font-bold text-slate-700" x-text="state.bullCount"></span>
+            </label>
+            <input type="range" min="0" max="10" step="1" x-model.number="state.bullCount" class="w-full accent-slate-600 mt-1" />
+          </div>
+
+          <div>
+            <div class="text-[11px] font-bold text-slate-600 mb-1">3.7 Baskın ırk</div>
+            <div class="flex gap-1 flex-wrap">
+              <template x-for="o in [{id:null,l:'—'},{id:'holstein',l:'Holstein'},{id:'simmental',l:'Simental'},{id:'jersey',l:'Jersey'}]" :key="o.l">
+                <button @click="state.breed = o.id"
+                  :class="state.breed === o.id ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'"
+                  class="px-2 py-1 rounded text-[11px] font-semibold" x-text="o.l"></button>
+              </template>
+            </div>
+          </div>
+        </div>
+      </details>
+
+      <!-- Onay -->
+      <div class="mt-5 p-3 rounded-xl bg-emerald-600 text-white">
+        <div class="text-[10px] font-bold uppercase tracking-wider opacity-90 mb-1">Sonuç</div>
+        <div class="text-xs">Beğendin mi? Bana <b>"Batch 1 OK"</b> de → Batch 2'ye geçeyim.</div>
+      </div>
+    </aside>
+
+    <!-- FARM SCENE -->
+    <main class="farm-bg relative overflow-hidden" style="min-height: calc(100vh - 60px);">
+
+      <!-- Sun + clouds -->
+      <svg viewBox="0 0 100 100" class="absolute top-4 right-8 w-20 h-20 z-10">
+        <g class="sun-rays">
+          <circle cx="50" cy="50" r="38" fill="#fde68a" opacity="0.35"/>
+          <circle cx="50" cy="50" r="32" fill="#fcd34d" opacity="0.5"/>
+        </g>
+        <circle cx="50" cy="50" r="20" fill="#fbbf24"/>
+        <circle cx="50" cy="50" r="16" fill="#f59e0b"/>
+        <circle cx="46" cy="46" r="3" fill="white" opacity="0.6"/>
+      </svg>
+      <svg viewBox="0 0 100 30" class="absolute top-10 cloud-drift w-32 h-10 opacity-90" preserveAspectRatio="none">
+        <ellipse cx="22" cy="18" rx="16" ry="9" fill="white"/>
+        <ellipse cx="42" cy="14" rx="20" ry="11" fill="white"/>
+        <ellipse cx="65" cy="18" rx="18" ry="9" fill="white"/>
+      </svg>
+
+      <!-- Total area badge -->
+      <div x-show="farm.totalAreaDa > 0" x-cloak class="absolute top-3 left-1/2 -translate-x-1/2 z-10 pointer-events-none">
+        <div class="bg-white/90 backdrop-blur px-4 py-2 rounded-full shadow border border-emerald-200 flex items-center gap-2">
+          <span class="text-xl">🌾</span>
+          <span class="text-sm font-bold text-emerald-800" x-text="`${farm.totalAreaDa} dönüm`"></span>
+        </div>
+      </div>
+
+      <svg viewBox="0 0 900 620" class="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <linearGradient id="pSolarGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.9"/><stop offset="100%" stop-color="#1e3a8a" stop-opacity="0.5"/>
+          </linearGradient>
+          <linearGradient id="pBarnFront" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fef3c7"/><stop offset="100%" stop-color="#fde68a"/>
+          </linearGradient>
+          <linearGradient id="pBarnSide" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#fcd34d"/><stop offset="100%" stop-color="#f59e0b"/>
+          </linearGradient>
+          <linearGradient id="pRoofGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#dc2626"/><stop offset="100%" stop-color="#991b1b"/>
+          </linearGradient>
+          <radialGradient id="pGrassGrad" cx="0.5" cy="0.5" r="0.7">
+            <stop offset="0%" stop-color="#bef264"/><stop offset="100%" stop-color="#65a30d"/>
+          </radialGradient>
+          <linearGradient id="pTankGrad" x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stop-color="#f1f5f9"/><stop offset="100%" stop-color="#94a3b8"/>
+          </linearGradient>
+          <linearGradient id="pSiloGrad" x1="0" y1="0" x2="1" y2="0">
+            <stop offset="0%" stop-color="#64748b"/><stop offset="50%" stop-color="#cbd5e1"/><stop offset="100%" stop-color="#64748b"/>
+          </linearGradient>
+        </defs>
+
+        <path d="M 0,200 Q 200,150 400,180 T 900,170 L 900,250 L 0,250 Z" fill="#86efac" opacity="0.35"/>
+        <path d="M 0,230 Q 180,200 400,220 T 900,215 L 900,260 L 0,260 Z" fill="#65a30d" opacity="0.4"/>
+        <polygon points="450,160 820,335 450,510 80,335" fill="url(#pGrassGrad)" stroke="#65a30d" stroke-width="2"/>
+        <polygon points="450,200 740,335 450,470 160,335" fill="#a3e635" opacity="0.4"/>
+        <g stroke="#65a30d" stroke-width="0.5" opacity="0.3">
+          <line x1="280" y1="247" x2="620" y2="247"/>
+          <line x1="190" y1="291" x2="710" y2="291"/>
+          <line x1="190" y1="378" x2="710" y2="378"/>
+          <line x1="280" y1="423" x2="620" y2="423"/>
+          <line x1="365" y1="203" x2="365" y2="467"/>
+          <line x1="450" y1="160" x2="450" y2="510"/>
+          <line x1="535" y1="203" x2="535" y2="467"/>
+        </g>
+        <path d="M 450,510 Q 600,540 820,560" stroke="#a16207" stroke-width="7" fill="none" opacity="0.45"/>
+
+        <g x-show="farm.energy === 'grid' || farm.energy === 'mixed'" x-cloak class="pop-in">
+          <line x1="70" y1="280" x2="450" y2="200" stroke="#1e293b" stroke-width="1.5" opacity="0.5"/>
+          <rect x="65" y="240" width="6" height="60" fill="#475569"/>
+          <line x1="62" y1="250" x2="78" y2="250" stroke="#475569" stroke-width="2"/>
+        </g>
+        <g x-show="farm.energy === 'solar' || farm.energy === 'mixed'" x-cloak class="pop-in">
+          <g transform="translate(700, 410)">
+            <polygon points="0,0 50,-25 90,-5 40,20" fill="#1e3a8a"/>
+            <polygon points="0,0 50,-25 90,-5 40,20" fill="url(#pSolarGrad)" opacity="0.7"/>
+            <line x1="15" y1="-7" x2="55" y2="-15" stroke="#1e40af" stroke-width="0.7"/>
+            <line x1="30" y1="-2" x2="70" y2="-10" stroke="#1e40af" stroke-width="0.7"/>
+            <line x1="30" y1="0" x2="33" y2="20" stroke="#475569" stroke-width="2"/>
+            <line x1="60" y1="10" x2="63" y2="30" stroke="#475569" stroke-width="2"/>
+          </g>
+        </g>
+
+        <g x-show="farm.water === 'well'" x-cloak class="pop-in">
+          <g transform="translate(160, 410)">
+            <ellipse cx="0" cy="5" rx="22" ry="11" fill="#7c2d12"/>
+            <ellipse cx="0" cy="0" rx="22" ry="11" fill="#a16207"/>
+            <ellipse cx="0" cy="0" rx="16" ry="7" fill="#1e3a8a"/>
+            <ellipse cx="0" cy="-1" rx="14" ry="6" fill="#3b82f6"/>
+            <rect x="-2" y="-30" width="4" height="30" fill="#92400e"/>
+            <line x1="-12" y1="-20" x2="12" y2="-20" stroke="#92400e" stroke-width="2"/>
+          </g>
+        </g>
+        <g x-show="farm.water === 'pond'" x-cloak class="pop-in">
+          <g transform="translate(160, 420)">
+            <ellipse cx="0" cy="3" rx="42" ry="19" fill="#1e3a8a" opacity="0.4"/>
+            <ellipse cx="-2" cy="-2" rx="38" ry="16" fill="#3b82f6"/>
+          </g>
+        </g>
+        <g x-show="farm.water === 'mains'" x-cloak class="pop-in">
+          <g transform="translate(160, 410)">
+            <rect x="-12" y="-32" width="24" height="34" fill="#64748b" rx="2"/>
+            <circle cx="0" cy="-14" r="6" fill="#1e3a8a"/>
+            <text x="0" y="-11" text-anchor="middle" font-size="6" fill="white" font-weight="bold">H₂O</text>
+          </g>
+        </g>
+
+        <g x-show="farm.silo === 'concrete'" x-cloak class="pop-in">
+          <g transform="translate(250, 260)">
+            <ellipse cx="0" cy="80" rx="35" ry="12" fill="black" opacity="0.2"/>
+            <rect x="-35" y="-30" width="70" height="110" fill="url(#pSiloGrad)"/>
+            <ellipse cx="0" cy="-30" rx="35" ry="12" fill="#cbd5e1"/>
+            <ellipse cx="0" cy="-30" rx="32" ry="10" fill="#16a34a" opacity="0.6"/>
+            <path d="M -35,-30 Q 0,-60 35,-30 Z" fill="#dc2626"/>
+          </g>
+        </g>
+        <g x-show="farm.silo === 'pile'" x-cloak class="pop-in">
+          <g transform="translate(250, 360)">
+            <ellipse cx="0" cy="20" rx="55" ry="14" fill="#15803d"/>
+            <ellipse cx="0" cy="10" rx="50" ry="22" fill="#16a34a"/>
+            <ellipse cx="0" cy="5" rx="45" ry="20" fill="#22c55e"/>
+          </g>
+        </g>
+        <g x-show="farm.silo === 'bale'" x-cloak class="pop-in">
+          <g transform="translate(250, 380)">
+            <ellipse cx="-25" cy="0" rx="20" ry="14" fill="#facc15"/>
+            <ellipse cx="20" cy="0" rx="20" ry="14" fill="#facc15"/>
+            <ellipse cx="0" cy="-25" rx="20" ry="14" fill="#facc15"/>
+          </g>
+        </g>
+
+        <g x-show="farm.barn === 'free'" x-cloak class="pop-in">
+          <g transform="translate(450, 290)">
+            <ellipse cx="0" cy="115" rx="145" ry="22" fill="black" opacity="0.2"/>
+            <polygon points="-130,40 -130,90 0,160 130,90 130,40 0,-30" fill="url(#pBarnFront)"/>
+            <polygon points="-130,40 -130,90 0,160 0,110" fill="#fde68a"/>
+            <polygon points="0,110 0,160 130,90 130,40" fill="url(#pBarnSide)"/>
+            <polygon points="-130,40 0,-30 130,40 0,40" fill="url(#pRoofGrad)"/>
+            <polygon points="0,-30 130,40 0,40" fill="#991b1b"/>
+            <rect x="-115" y="50" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-95" y="60" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-75" y="70" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-55" y="80" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-35" y="90" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-45" y="-10" width="90" height="18" fill="#fbbf24" rx="3" stroke="#92400e" stroke-width="1"/>
+            <text x="0" y="3" text-anchor="middle" font-size="10" fill="#7c2d12" font-weight="bold" font-family="Fredoka">DAIRYMIND</text>
+          </g>
+        </g>
+        <g x-show="farm.barn === 'tie'" x-cloak class="pop-in">
+          <g transform="translate(450, 290)">
+            <ellipse cx="0" cy="105" rx="125" ry="20" fill="black" opacity="0.2"/>
+            <polygon points="-110,40 -110,90 0,150 110,90 110,40 0,-15" fill="#fed7aa"/>
+            <polygon points="-110,40 -110,90 0,150 0,100" fill="#fdba74"/>
+            <polygon points="0,100 0,150 110,90 110,40" fill="#fb923c"/>
+            <polygon points="-110,40 0,-15 110,40 0,40" fill="#7c2d12"/>
+            <polygon points="0,-15 110,40 0,40" fill="#5c1f0a"/>
+            <rect x="-14" y="80" width="28" height="40" fill="#451a03"/>
+          </g>
+        </g>
+        <g x-show="farm.barn === 'open'" x-cloak class="pop-in">
+          <g transform="translate(450, 320)">
+            <ellipse cx="0" cy="80" rx="155" ry="18" fill="black" opacity="0.1"/>
+            <polygon points="-50,15 50,15 70,40 -70,40" fill="#7c2d12"/>
+            <polygon points="-70,40 -50,15 50,15 70,40 0,55" fill="#92400e" opacity="0.8"/>
+            <line x1="-130" y1="60" x2="130" y2="60" stroke="#92400e" stroke-width="3"/>
+          </g>
+        </g>
+
+        <g x-show="farm.barn && farm.barn !== 'open'" x-cloak class="pop-in">
+          <g transform="translate(450, 248)">
+            <rect x="-12" y="-12" width="24" height="24" fill="#475569" rx="3"/>
+            <circle cx="0" cy="0" r="9" fill="#1e293b"/>
+            <g class="spin-slow">
+              <path d="M 0,-9 Q 3,-3 0,0 Q -3,-3 0,-9 Z" fill="#94a3b8"/>
+              <path d="M 9,0 Q 3,3 0,0 Q 3,-3 9,0 Z" fill="#94a3b8"/>
+              <path d="M 0,9 Q -3,3 0,0 Q 3,3 0,9 Z" fill="#94a3b8"/>
+              <path d="M -9,0 Q -3,-3 0,0 Q -3,3 -9,0 Z" fill="#94a3b8"/>
+            </g>
+            <circle cx="0" cy="0" r="2" fill="#fbbf24"/>
+          </g>
+        </g>
+
+        <g x-show="farm.parlor === 'herringbone'" x-cloak class="pop-in">
+          <g transform="translate(640, 380)">
+            <ellipse cx="0" cy="60" rx="65" ry="12" fill="black" opacity="0.2"/>
+            <polygon points="-55,15 -55,40 0,75 55,40 55,15 0,-15" fill="#bfdbfe"/>
+            <polygon points="-55,15 -55,40 0,75 0,45" fill="#93c5fd"/>
+            <polygon points="0,45 0,75 55,40 55,15" fill="#60a5fa"/>
+            <polygon points="-55,15 0,-15 55,15 0,15" fill="#1d4ed8"/>
+            <polygon points="0,-15 55,15 0,15" fill="#1e40af"/>
+            <text x="0" y="38" text-anchor="middle" font-size="9" fill="#1e3a8a" font-weight="bold" font-family="Fredoka">SAĞIM</text>
+          </g>
+        </g>
+        <g x-show="farm.parlor === 'robot'" x-cloak class="pop-in">
+          <g transform="translate(640, 380)">
+            <ellipse cx="0" cy="60" rx="50" ry="12" fill="black" opacity="0.2"/>
+            <polygon points="-40,5 -40,40 0,70 40,40 40,5 0,-25" fill="#e0e7ff"/>
+            <polygon points="-40,5 -40,40 0,70 0,35" fill="#c7d2fe"/>
+            <polygon points="0,35 0,70 40,40 40,5" fill="#a5b4fc"/>
+            <polygon points="-40,5 0,-25 40,5 0,5" fill="#4338ca"/>
+            <polygon points="0,-25 40,5 0,5" fill="#312e81"/>
+            <g class="pulse-soft">
+              <circle cx="-15" cy="25" r="2" fill="#fbbf24"/>
+              <circle cx="-5" cy="25" r="2" fill="#22c55e"/>
+              <circle cx="5" cy="25" r="2" fill="#3b82f6"/>
+            </g>
+            <text x="0" y="20" text-anchor="middle" font-size="9" fill="#312e81" font-weight="bold" font-family="Fredoka">🤖 ROBOT</text>
+          </g>
+        </g>
+        <g x-show="farm.parlor === 'rotary'" x-cloak class="pop-in">
+          <g transform="translate(640, 380)">
+            <ellipse cx="0" cy="60" rx="60" ry="14" fill="black" opacity="0.2"/>
+            <ellipse cx="0" cy="40" rx="55" ry="24" fill="#475569"/>
+            <g class="spin-slow">
+              <ellipse cx="0" cy="40" rx="50" ry="20" fill="#94a3b8"/>
+              <circle cx="-35" cy="40" r="3" fill="#1e293b"/>
+              <circle cx="35" cy="40" r="3" fill="#1e293b"/>
+              <circle cx="0" cy="22" r="3" fill="#1e293b"/>
+              <circle cx="0" cy="58" r="3" fill="#1e293b"/>
+            </g>
+            <circle cx="0" cy="40" r="8" fill="#1e293b"/>
+          </g>
+        </g>
+
+        <g x-show="farm.tank" x-cloak class="pop-in">
+          <g :transform="`translate(700, 530) scale(${farm.tank === 'small' ? 0.75 : farm.tank === 'medium' ? 0.95 : 1.15})`">
+            <ellipse cx="0" cy="25" rx="40" ry="9" fill="black" opacity="0.2"/>
+            <ellipse cx="0" cy="15" rx="36" ry="8" fill="#94a3b8"/>
+            <rect x="-36" y="-15" width="72" height="30" fill="url(#pTankGrad)"/>
+            <ellipse cx="0" cy="-15" rx="36" ry="8" fill="#f1f5f9"/>
+            <ellipse cx="0" cy="-15" rx="32" ry="6" fill="#e2e8f0"/>
+            <text x="0" y="3" text-anchor="middle" font-size="8" fill="#1e293b" font-weight="bold" font-family="Fredoka"
+              x-text="(farm.tank === 'small' ? '🥛 500L' : farm.tank === 'medium' ? '🥛 2000L' : '🥛 5000L')"></text>
+          </g>
+        </g>
+
+        <g x-show="farm.manure === 'lagoon'" x-cloak class="pop-in">
+          <g transform="translate(770, 460)">
+            <ellipse cx="0" cy="8" rx="50" ry="12" fill="#451a03"/>
+            <ellipse cx="0" cy="3" rx="46" ry="10" fill="#78350f"/>
+            <ellipse cx="0" cy="0" rx="42" ry="8" fill="#92400e"/>
+          </g>
+        </g>
+        <g x-show="farm.manure === 'compost'" x-cloak class="pop-in">
+          <g transform="translate(770, 460)">
+            <ellipse cx="0" cy="8" rx="45" ry="11" fill="#451a03"/>
+            <path d="M -40,5 Q 0,-20 40,5 L 40,8 L -40,8 Z" fill="#78350f"/>
+            <g class="smoke"><ellipse cx="-5" cy="-15" rx="6" ry="4" fill="white" opacity="0.6"/></g>
+            <g class="smoke" style="animation-delay: 1.5s"><ellipse cx="10" cy="-12" rx="5" ry="3" fill="white" opacity="0.6"/></g>
+          </g>
+        </g>
+        <g x-show="farm.manure === 'biogas'" x-cloak class="pop-in">
+          <g transform="translate(770, 460)">
+            <ellipse cx="0" cy="35" rx="35" ry="10" fill="black" opacity="0.2"/>
+            <circle cx="0" cy="5" r="32" fill="#15803d"/>
+            <circle cx="0" cy="5" r="30" fill="#16a34a"/>
+            <text x="0" y="10" text-anchor="middle" font-size="9" fill="white" font-weight="bold" font-family="Fredoka">⚡ BİYOGAZ</text>
+          </g>
+        </g>
+
+        <!-- ===== BATCH 1 SVG ===== -->
+
+        <g x-show="farm.farmAreaDa > 0" x-cloak class="pop-in">
+          <g>
+            <polygon points="60,395 290,540 60,615 -190,455" fill="#84cc16" opacity="0.55" stroke="#65a30d" stroke-width="1.5"/>
+            <polygon points="60,425 260,540 60,585 -155,455" fill="#a3e635" opacity="0.4"/>
+            <g x-show="farm.cornSilageTon > 0" x-cloak>
+              <g stroke="#a16207" stroke-width="1" opacity="0.75">
+                <line x1="-60" y1="478" x2="0" y2="510"/>
+                <line x1="-30" y1="460" x2="30" y2="492"/>
+                <line x1="0" y1="442" x2="60" y2="474"/>
+                <line x1="30" y1="424" x2="90" y2="456"/>
+                <line x1="60" y1="446" x2="120" y2="478"/>
+                <line x1="90" y1="466" x2="150" y2="498"/>
+                <line x1="120" y1="486" x2="180" y2="518"/>
+              </g>
+              <g fill="#fbbf24">
+                <circle cx="-45" cy="467" r="2.5"/><circle cx="-15" cy="450" r="2.5"/>
+                <circle cx="15" cy="432" r="2.5"/><circle cx="45" cy="415" r="2.5"/>
+                <circle cx="75" cy="445" r="2.5"/><circle cx="105" cy="465" r="2.5"/>
+                <circle cx="135" cy="485" r="2.5"/><circle cx="165" cy="505" r="2.5"/>
+              </g>
+            </g>
+            <g transform="translate(65, 595)">
+              <rect x="-50" y="-10" width="100" height="20" rx="10" fill="#15803d"/>
+              <text x="0" y="4" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Fredoka"
+                x-text="`🌽 ${farm.farmAreaDa} dön${farm.cornSilageTon > 0 ? ' · ' + farm.cornSilageTon + 't' : ''}`"></text>
+            </g>
+          </g>
+        </g>
+
+        <g x-show="farm.irrigation && farm.farmAreaDa > 0" x-cloak class="pop-in">
+          <g transform="translate(0, 440)">
+            <rect x="-1.5" y="0" width="3" height="28" fill="#475569"/>
+            <circle cx="0" cy="0" r="3.5" fill="#1e293b"/>
+            <g class="pulse-soft" stroke="#3b82f6" stroke-width="1.2" fill="none" opacity="0.8">
+              <path d="M -2,0 Q -20,-18 -32,-8"/>
+              <path d="M 2,0 Q 20,-18 32,-8"/>
+              <path d="M 0,-2 Q 0,-22 0,-30"/>
+            </g>
+            <g fill="#60a5fa" class="pulse-soft" style="animation-delay: 0.5s">
+              <circle cx="-28" cy="-5" r="1.8" opacity="0.85"/>
+              <circle cx="28" cy="-5" r="1.8" opacity="0.85"/>
+              <circle cx="0" cy="-27" r="1.8" opacity="0.85"/>
+              <circle cx="-15" cy="-20" r="1.2" opacity="0.7"/>
+              <circle cx="15" cy="-20" r="1.2" opacity="0.7"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- ===== BATCH 2: AHIR DETAYLARI ===== -->
+
+        <!-- 2.8 Barn area badge — outer transform / inner pop-in (CSS transform fix) -->
+        <g x-show="farm.barnAreaM2 > 0" x-cloak transform="translate(395, 480)">
+          <g class="pop-in">
+            <rect x="-34" y="-11" width="68" height="22" rx="11" fill="#fbbf24" stroke="white" stroke-width="1.5"/>
+            <text x="0" y="4" text-anchor="middle" font-size="10" font-weight="bold" fill="#451a03" font-family="Fredoka"
+              x-text="`🏠 ${farm.barnAreaM2}m²`"></text>
+          </g>
+        </g>
+
+        <!-- 2.9 Barn capacity badge -->
+        <g x-show="farm.barnCapacity > 0" x-cloak transform="translate(505, 500)">
+          <g class="pop-in">
+            <rect x="-38" y="-11" width="76" height="22" rx="11" fill="#0ea5e9" stroke="white" stroke-width="1.5"/>
+            <text x="0" y="4" text-anchor="middle" font-size="10" font-weight="bold" fill="white" font-family="Fredoka"
+              x-text="`👥 ${farm.barnCapacity} baş`"></text>
+          </g>
+        </g>
+
+        <!-- 2.12 Cooling shower droplets -->
+        <g x-show="(farm.cooling === 'fan_shower' || farm.cooling === 'shower') && farm.barn && farm.barn !== 'open'" x-cloak transform="translate(450, 240)">
+          <g class="pop-in">
+            <g class="pulse-soft">
+              <circle cx="-32" cy="-18" r="2.2" fill="#60a5fa" opacity="0.8"/>
+              <circle cx="-16" cy="-25" r="2.2" fill="#60a5fa" opacity="0.8"/>
+              <circle cx="0" cy="-28" r="2.2" fill="#60a5fa" opacity="0.8"/>
+              <circle cx="16" cy="-25" r="2.2" fill="#60a5fa" opacity="0.8"/>
+              <circle cx="32" cy="-18" r="2.2" fill="#60a5fa" opacity="0.8"/>
+              <ellipse cx="-32" cy="-5" rx="1" ry="4" fill="#3b82f6"/>
+              <ellipse cx="-16" cy="-12" rx="1" ry="4" fill="#3b82f6"/>
+              <ellipse cx="0" cy="-15" rx="1" ry="4" fill="#3b82f6"/>
+              <ellipse cx="16" cy="-12" rx="1" ry="4" fill="#3b82f6"/>
+              <ellipse cx="32" cy="-5" rx="1" ry="4" fill="#3b82f6"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- 2.12 Cooling fan icons -->
+        <g x-show="(farm.cooling === 'fan_shower' || farm.cooling === 'fan') && farm.barn && farm.barn !== 'open'" x-cloak transform="translate(450, 215)">
+          <g class="pop-in">
+            <g transform="translate(-25, 0)">
+              <circle r="7" fill="#475569"/>
+              <g class="spin-slow" style="animation-duration: 2s">
+                <ellipse cx="0" cy="-4" rx="2" ry="5" fill="#cbd5e1"/>
+                <ellipse cx="4" cy="0" rx="5" ry="2" fill="#cbd5e1"/>
+                <ellipse cx="0" cy="4" rx="2" ry="5" fill="#cbd5e1"/>
+                <ellipse cx="-4" cy="0" rx="5" ry="2" fill="#cbd5e1"/>
+              </g>
+              <circle r="1.5" fill="#fbbf24"/>
+            </g>
+            <g transform="translate(25, 0)">
+              <circle r="7" fill="#475569"/>
+              <g class="spin-slow" style="animation-duration: 2.3s">
+                <ellipse cx="0" cy="-4" rx="2" ry="5" fill="#cbd5e1"/>
+                <ellipse cx="4" cy="0" rx="5" ry="2" fill="#cbd5e1"/>
+                <ellipse cx="0" cy="4" rx="2" ry="5" fill="#cbd5e1"/>
+                <ellipse cx="-4" cy="0" rx="5" ry="2" fill="#cbd5e1"/>
+              </g>
+              <circle r="1.5" fill="#fbbf24"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- 2.12 Cooling natural → leaf icon -->
+        <g x-show="farm.cooling === 'natural' && farm.barn && farm.barn !== 'open'" x-cloak transform="translate(450, 215)">
+          <g class="pop-in">
+            <g class="cow-bob">
+              <ellipse cx="-12" cy="0" rx="6" ry="9" fill="#22c55e" transform="rotate(-30, -12, 0)"/>
+              <ellipse cx="0" cy="-4" rx="6" ry="9" fill="#16a34a"/>
+              <ellipse cx="12" cy="0" rx="6" ry="9" fill="#22c55e" transform="rotate(30, 12, 0)"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- 2.15 Mechanical ventilation: extra fans flanking center -->
+        <g x-show="farm.ventilation === 'mechanical' && farm.barn && farm.barn !== 'open'" x-cloak class="pop-in">
+          <g transform="translate(395, 268)">
+            <rect x="-9" y="-9" width="18" height="18" fill="#475569" rx="2"/>
+            <circle cx="0" cy="0" r="7" fill="#1e293b"/>
+            <g class="spin-slow" style="animation-duration: 4s">
+              <path d="M 0,-7 Q 2,-2 0,0 Q -2,-2 0,-7 Z" fill="#94a3b8"/>
+              <path d="M 7,0 Q 2,2 0,0 Q 2,-2 7,0 Z" fill="#94a3b8"/>
+              <path d="M 0,7 Q -2,2 0,0 Q 2,2 0,7 Z" fill="#94a3b8"/>
+              <path d="M -7,0 Q -2,-2 0,0 Q -2,2 -7,0 Z" fill="#94a3b8"/>
+            </g>
+            <circle cx="0" cy="0" r="1.5" fill="#fbbf24"/>
+          </g>
+          <g transform="translate(505, 268)">
+            <rect x="-9" y="-9" width="18" height="18" fill="#475569" rx="2"/>
+            <circle cx="0" cy="0" r="7" fill="#1e293b"/>
+            <g class="spin-slow" style="animation-duration: 4.5s">
+              <path d="M 0,-7 Q 2,-2 0,0 Q -2,-2 0,-7 Z" fill="#94a3b8"/>
+              <path d="M 7,0 Q 2,2 0,0 Q 2,-2 7,0 Z" fill="#94a3b8"/>
+              <path d="M 0,7 Q -2,2 0,0 Q 2,2 0,7 Z" fill="#94a3b8"/>
+              <path d="M -7,0 Q -2,-2 0,0 Q -2,2 -7,0 Z" fill="#94a3b8"/>
+            </g>
+            <circle cx="0" cy="0" r="1.5" fill="#fbbf24"/>
+          </g>
+        </g>
+
+        <!-- 2.15 Natural ventilation: extra open windows on barn -->
+        <g x-show="farm.ventilation === 'natural' && farm.barn" x-cloak class="pop-in">
+          <g transform="translate(450, 290)">
+            <rect x="-110" y="55" width="12" height="20" fill="#7dd3fc" stroke="#451a03" stroke-width="1" opacity="0.85"/>
+            <rect x="-85" y="62" width="12" height="20" fill="#7dd3fc" stroke="#451a03" stroke-width="1" opacity="0.85"/>
+            <rect x="70" y="62" width="12" height="20" fill="#7dd3fc" stroke="#451a03" stroke-width="1" opacity="0.85"/>
+            <rect x="95" y="55" width="12" height="20" fill="#7dd3fc" stroke="#451a03" stroke-width="1" opacity="0.85"/>
+          </g>
+        </g>
+
+        <!-- 2.16 Bedding swatches — 5 fixed slots (SVG template x-for fix) -->
+        <g x-show="farm.bedding && farm.bedding.length > 0 && farm.barn" x-cloak transform="translate(450, 525)">
+          <g class="pop-in">
+            <text x="-90" y="0" text-anchor="end" font-size="9" fill="#475569" font-weight="bold" font-family="Fredoka">Yataklık:</text>
+            <g x-show="farm.bedding[0]" :transform="'translate(-72, -4)'">
+              <circle r="8" stroke="white" stroke-width="1.5" :fill="bedColor(farm.bedding[0])"/>
+            </g>
+            <g x-show="farm.bedding[1]" :transform="'translate(-50, -4)'">
+              <circle r="8" stroke="white" stroke-width="1.5" :fill="bedColor(farm.bedding[1])"/>
+            </g>
+            <g x-show="farm.bedding[2]" :transform="'translate(-28, -4)'">
+              <circle r="8" stroke="white" stroke-width="1.5" :fill="bedColor(farm.bedding[2])"/>
+            </g>
+            <g x-show="farm.bedding[3]" :transform="'translate(-6, -4)'">
+              <circle r="8" stroke="white" stroke-width="1.5" :fill="bedColor(farm.bedding[3])"/>
+            </g>
+            <g x-show="farm.bedding[4]" :transform="'translate(16, -4)'">
+              <circle r="8" stroke="white" stroke-width="1.5" :fill="bedColor(farm.bedding[4])"/>
+            </g>
+          </g>
+        </g>
+
+        <g x-show="farm.feedStorageMonths > 0" x-cloak class="pop-in">
+          <g transform="translate(795, 320)">
+            <ellipse cx="0" cy="65" rx="38" ry="8" fill="black" opacity="0.2"/>
+            <g :transform="`scale(${Math.min(0.7 + farm.feedStorageMonths * 0.05, 1.2)})`">
+              <rect x="-30" y="0" width="60" height="50" fill="#a16207"/>
+              <rect x="-30" y="0" width="60" height="50" fill="url(#pBarnSide)" opacity="0.3"/>
+              <polygon points="-30,0 0,-20 30,0" fill="#7c2d12"/>
+              <polygon points="-30,0 0,-20 0,0" fill="#92400e"/>
+              <rect x="-8" y="20" width="16" height="30" fill="#451a03"/>
+              <circle cx="-3" cy="35" r="1" fill="#fbbf24"/>
+              <rect x="-22" y="10" width="10" height="10" fill="#7dd3fc" stroke="#451a03" stroke-width="0.8"/>
+              <text x="0" y="-25" text-anchor="middle" font-size="7" fill="#451a03" font-weight="bold" font-family="Fredoka">YEM</text>
+            </g>
+          </g>
+        </g>
+
+        <!-- HERD CLUSTER -->
+        <g x-show="farm.herdSize > 0" x-cloak class="pop-in">
+          <g transform="translate(180, 410)">
+            <g class="cow-bob">
+              <ellipse cx="0" cy="6" rx="14" ry="3" fill="black" opacity="0.25"/>
+              <ellipse cx="0" cy="0" rx="13" ry="7" fill="white"/>
+              <ellipse cx="-3" cy="-1" rx="4" ry="3"
+                :fill="farm.herd.breed === 'simmental' ? '#dc2626' : farm.herd.breed === 'jersey' ? '#92400e' : '#1e293b'"/>
+              <ellipse cx="4" cy="1" rx="3" ry="2"
+                :fill="farm.herd.breed === 'simmental' ? '#dc2626' : farm.herd.breed === 'jersey' ? '#92400e' : '#1e293b'"/>
+              <circle cx="-10" cy="-1" r="4" fill="white"/>
+              <circle cx="-11" cy="-2" r="0.7" fill="#1e293b"/>
+              <ellipse cx="-12" cy="-4" rx="1.8" ry="2.3" fill="#fda4af"/>
+            </g>
+            <g class="cow-walk-iso" style="animation-delay: 1.2s">
+              <g transform="translate(35, 18) scale(0.65)">
+                <ellipse cx="0" cy="4" rx="10" ry="2.5" fill="black" opacity="0.22"/>
+                <ellipse cx="0" cy="0" rx="10" ry="5.5" fill="white"/>
+                <ellipse cx="-2" cy="-1" rx="3" ry="2.2"
+                  :fill="farm.herd.breed === 'simmental' ? '#dc2626' : farm.herd.breed === 'jersey' ? '#92400e' : '#1e293b'"/>
+                <circle cx="-8" cy="-1" r="3.2" fill="white"/>
+                <ellipse cx="-10" cy="-3.5" rx="1.5" ry="2" fill="#fda4af"/>
+              </g>
+            </g>
+            <g class="cow-bob" style="animation-delay: 0.6s">
+              <g transform="translate(-32, 16) scale(0.65)">
+                <ellipse cx="0" cy="4" rx="10" ry="2.5" fill="black" opacity="0.22"/>
+                <ellipse cx="0" cy="0" rx="10" ry="5.5" fill="white"/>
+                <ellipse cx="-2" cy="-1" rx="3" ry="2.2"
+                  :fill="farm.herd.breed === 'simmental' ? '#dc2626' : farm.herd.breed === 'jersey' ? '#92400e' : '#1e293b'"/>
+                <circle cx="-8" cy="-1" r="3.2" fill="white"/>
+                <ellipse cx="-10" cy="-3.5" rx="1.5" ry="2" fill="#fda4af"/>
+              </g>
+            </g>
+            <g transform="translate(0, 40)">
+              <rect x="-32" y="-10" width="64" height="20" rx="10" fill="#15803d" stroke="white" stroke-width="1.5"/>
+              <text x="0" y="4" text-anchor="middle" font-size="11" font-weight="bold" fill="white" font-family="Fredoka"
+                x-text="`🐄 ${farm.herdSize} baş`"></text>
+            </g>
+            <!-- ===== BATCH 3: Sürü sub-group chips ===== -->
+            <g x-show="farm.herd.milking > 0" x-cloak transform="translate(-35, 65)">
+              <rect x="0" y="-7" width="70" height="14" rx="7" fill="white" stroke="#15803d" stroke-width="1"/>
+              <text x="35" y="3" text-anchor="middle" font-size="9" font-weight="bold" fill="#15803d" font-family="Fredoka"
+                x-text="`🥛 ${farm.herd.milking} sağmal`"></text>
+            </g>
+            <g x-show="farm.herd.dry > 0" x-cloak transform="translate(-35, 82)">
+              <rect x="0" y="-7" width="70" height="14" rx="7" fill="white" stroke="#7c2d12" stroke-width="1"/>
+              <text x="35" y="3" text-anchor="middle" font-size="9" font-weight="bold" fill="#7c2d12" font-family="Fredoka"
+                x-text="`💤 ${farm.herd.dry} kuru`"></text>
+            </g>
+            <g x-show="farm.herd.heifer > 0" x-cloak transform="translate(-35, 99)">
+              <rect x="0" y="-7" width="70" height="14" rx="7" fill="white" stroke="#a16207" stroke-width="1"/>
+              <text x="35" y="3" text-anchor="middle" font-size="9" font-weight="bold" fill="#a16207" font-family="Fredoka"
+                x-text="`🐂 ${farm.herd.heifer} düve`"></text>
+            </g>
+            <g x-show="farm.herd.calf > 0" x-cloak transform="translate(-35, 116)">
+              <rect x="0" y="-7" width="70" height="14" rx="7" fill="white" stroke="#0ea5e9" stroke-width="1"/>
+              <text x="35" y="3" text-anchor="middle" font-size="9" font-weight="bold" fill="#0ea5e9" font-family="Fredoka"
+                x-text="`🍼 ${farm.herd.calf} buzağı`"></text>
+            </g>
+            <g x-show="farm.herd.bull > 0" x-cloak transform="translate(-35, 133)">
+              <rect x="0" y="-7" width="70" height="14" rx="7" fill="white" stroke="#1e293b" stroke-width="1"/>
+              <text x="35" y="3" text-anchor="middle" font-size="9" font-weight="bold" fill="#1e293b" font-family="Fredoka"
+                x-text="`♂ ${farm.herd.bull} boğa`"></text>
+            </g>
+          </g>
+        </g>
+      </svg>
+
+      <!-- State JSON display (dev) -->
+      <details class="absolute bottom-3 left-3 z-10 max-w-sm">
+        <summary class="cursor-pointer text-[10px] font-bold text-slate-600 bg-white/80 backdrop-blur px-3 py-1.5 rounded-full shadow">📋 Farm State JSON</summary>
+        <pre class="mt-2 text-[10px] bg-slate-900 text-emerald-300 p-3 rounded-lg max-h-64 overflow-auto" x-text="JSON.stringify(farm, null, 2)"></pre>
+      </details>
+
+    </main>
+  </div>
+</div>
+
+<script>
+function preview() {
+  return {
+    state: {
+      // Batch 1
+      totalAreaDa: 150,
+      farmAreaDa: 80,
+      cornSilageTon: 1200,
+      irrigation: true,
+      feedStorageMonths: 6,
+      // Batch 2
+      barnAreaM2: 800,
+      barnCapacity: 100,
+      cooling: 'fan_shower',
+      ventilation: 'mechanical',
+      bedding: ['sand', 'rubber'],
+      // Batch 3 — sürü grupları
+      milkingCount: 75,
+      dryCount: 15,
+      heiferCount: 20,
+      calfCount: 10,
+      bullCount: 1,
+      // Main
+      barn: 'free',
+      parlor: 'robot',
+      tank: 'medium',
+      silo: 'concrete',
+      energy: 'mixed',
+      water: 'well',
+      manure: 'biogas',
+      herdSize: 120,
+      breed: 'simmental'
+    },
+
+    toggleBed(id) {
+      const has = this.state.bedding.includes(id);
+      this.state.bedding = has
+        ? this.state.bedding.filter(b => b !== id)
+        : [...this.state.bedding, id];
+    },
+
+    bedColor(b) {
+      const m = {
+        sand: '#fde68a', sawdust: '#fb923c', rubber: '#1e293b',
+        straw: '#facc15', waterbed: '#3b82f6', compost: '#78350f'
+      };
+      return m[b] || '#94a3b8';
+    },
+
+    init() {},
+
+    get farm() {
+      // Simulate answers map and use the real mapper for parity with anket/cifligim
+      const answers = {
+        'q_2_2_1': this.state.totalAreaDa,
+        'q_2_2_4': this.state.farmAreaDa,
+        'q_2_2_5': this.state.irrigation ? 'Evet, yıl boyu yeterli' : null,
+        'q_6_6_4': this.state.cornSilageTon,
+        'q_6_6_19': this.state.feedStorageMonths,
+        'q_2_2_6': this.state.water ? [this.state.water === 'well' ? 'Kuyu suyu' : this.state.water === 'pond' ? 'Dere/Nehir' : 'Şebeke suyu'] : [],
+        'q_2_2_7': this.state.barn === 'free' ? 'Serbest dolaşımlı (free-stall)' : this.state.barn === 'tie' ? 'Bağlı sistem (tie-stall)' : this.state.barn === 'open' ? 'Açık padok (Open lot)' : null,
+        'q_2_2_17': this.state.parlor === 'herringbone' ? 'Balık sırtı (herringbone)' : this.state.parlor === 'rotary' ? 'Karusel (rotary)' : this.state.parlor === 'robot' ? 'Robotik (AMS)' : null,
+        'q_2_2_19': this.state.tank === 'small' ? 500 : this.state.tank === 'medium' ? 2000 : this.state.tank === 'large' ? 5000 : 0,
+        'q_2_2_23': this.state.silo === 'concrete' ? 'Evet, beton silo' : this.state.silo === 'pile' ? 'Evet, yığın silaj' : this.state.silo === 'bale' ? 'Balya silaj' : null,
+        'q_2_2_25': this.state.energy === 'grid' ? 'Sadece şebeke' : this.state.energy === 'mixed' ? 'Şebeke + güneş enerjisi' : null,
+        'q_2_2_27': this.state.energy === 'solar' ? 'Güneş enerjisi (GES)' : null,
+        'q_2_2_28': this.state.manure === 'lagoon' ? 'Sıvı gübre lagünü' : this.state.manure === 'compost' ? 'Kompost' : this.state.manure === 'biogas' ? 'Biyogaz tesisi' : null,
+        'q_3_3_1': this.state.herdSize,
+        'q_3_3_7': this.state.breed === 'holstein' ? 'Holstein (Siyah Alaca)' : this.state.breed === 'simmental' ? 'Simental' : this.state.breed === 'jersey' ? 'Jersey' : null,
+        // Batch 2
+        'q_2_2_8': this.state.barnAreaM2,
+        'q_2_2_9': this.state.barnCapacity,
+        'q_2_2_12': this.state.cooling === 'fan_shower' ? 'Fan ve duş sistemi' : this.state.cooling === 'fan' ? 'Sadece fan' : this.state.cooling === 'shower' ? 'Sadece duş/sprey' : this.state.cooling === 'natural' ? 'Doğal havalandırma' : null,
+        'q_2_2_15': this.state.ventilation === 'natural' ? 'Doğal (yan açık + çatı)' : this.state.ventilation === 'mechanical' ? 'Mekanik (fanlı)' : this.state.ventilation === 'hybrid' ? 'Karma' : null,
+        'q_2_2_16': this.state.bedding.map(b => ({straw:'Sap/saman',sand:'Kum',sawdust:'Talaş',rubber:'Lastik mat',waterbed:'Vakumlu yatak (waterbed)',compost:'Gübre kompostu'})[b]).filter(Boolean),
+        // Batch 3 — sürü grupları
+        'q_3_3_2': this.state.milkingCount,
+        'q_3_3_3': this.state.dryCount,
+        'q_3_3_4': this.state.heiferCount,
+        'q_3_3_5': this.state.calfCount,
+        'q_3_3_6': this.state.bullCount,
+      };
+      return window.DMFarmMapper.mapAnswersToFarm(answers);
+    },
+
+    get builtCount() { return window.DMFarmMapper.countBuilt(this.farm); },
+    get extraCount() {
+      let n = 0;
+      if (this.farm.totalAreaDa > 0) n++;
+      if (this.farm.farmAreaDa > 0) n++;
+      if (this.farm.cornSilageTon > 0) n++;
+      if (this.farm.irrigation) n++;
+      if (this.farm.feedStorageMonths > 0) n++;
+      return n;
+    },
+
+    reset() {
+      this.state = {
+        totalAreaDa: 0, farmAreaDa: 0, cornSilageTon: 0, irrigation: false, feedStorageMonths: 0,
+        barnAreaM2: 0, barnCapacity: 0, cooling: null, ventilation: null, bedding: [],
+        milkingCount: 0, dryCount: 0, heiferCount: 0, calfCount: 0, bullCount: 0,
+        barn: null, parlor: null, tank: null, silo: null, energy: null, water: null, manure: null,
+        herdSize: 0, breed: null
+      };
+    },
+    demoFill() {
+      this.state = {
+        totalAreaDa: 200, farmAreaDa: 100, cornSilageTon: 1500, irrigation: true, feedStorageMonths: 8,
+        barnAreaM2: 1200, barnCapacity: 150, cooling: 'fan_shower', ventilation: 'mechanical', bedding: ['sand','rubber'],
+        milkingCount: 95, dryCount: 18, heiferCount: 25, calfCount: 12, bullCount: 1,
+        barn: 'free', parlor: 'robot', tank: 'large', silo: 'concrete',
+        energy: 'mixed', water: 'well', manure: 'biogas',
+        herdSize: 150, breed: 'holstein'
+      };
+    },
+    async copyState() {
+      try { await navigator.clipboard.writeText(JSON.stringify(this.farm, null, 2)); alert('State kopyalandı'); }
+      catch (e) { alert(JSON.stringify(this.farm, null, 2)); }
+    }
+  }
+}
+</script>
+</body>
+</html>

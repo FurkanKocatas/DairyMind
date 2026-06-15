@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Çiftliğim — DairyMind™</title>
+  <link rel="stylesheet" href="/vendor/tailwind.css?v=20260614d" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+  <script src="/farm-mapper.js"></script>
+  <!-- Vue 3 farm-engine web component -->
+  <link rel="stylesheet" href="/farm-engine/farm-engine.css?v=20260614b" />
+  <script src="/farm-engine/farm-scene.js?v=20260614b" defer></script>
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    [x-cloak] { display: none !important; }
+    .game-font { font-family: 'Fredoka', sans-serif; }
+    .stage-bg {
+      background:
+        radial-gradient(ellipse at 80% 10%, rgba(253, 224, 71, 0.4) 0%, transparent 50%),
+        linear-gradient(180deg, #bae6fd 0%, #7dd3fc 25%, #a7f3d0 55%, #86efac 75%, #65a30d 100%);
+    }
+    .pop-in { animation: popIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center bottom; }
+    @keyframes popIn {
+      0%   { opacity: 0; transform: translateY(60px) scale(0.3) rotate(-5deg); }
+      55%  { opacity: 1; transform: translateY(-10px) scale(1.08) rotate(2deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+    }
+    .cow-bob { animation: cowBob 2.8s ease-in-out infinite; }
+    @keyframes cowBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+    .cow-walk-iso { animation: cowWalkIso 12s ease-in-out infinite; }
+    @keyframes cowWalkIso {
+      0%   { transform: translate(0, 0); }
+      45%  { transform: translate(100px, 55px); }
+      50%  { transform: translate(100px, 55px) scaleX(-1); }
+      95%  { transform: translate(0, 0) scaleX(-1); }
+      100% { transform: translate(0, 0); }
+    }
+    .pulse-soft { animation: pulseSoft 2.5s ease-in-out infinite; }
+    @keyframes pulseSoft { 0%, 100% { opacity: 0.8; } 50% { opacity: 1; } }
+    .spin-slow { animation: spinIt 5s linear infinite; transform-origin: center; transform-box: fill-box; }
+    @keyframes spinIt { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .smoke { animation: smokeRise 4.5s ease-in-out infinite; }
+    @keyframes smokeRise {
+      0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+      30%  { opacity: 0.7; }
+      100% { opacity: 0; transform: translateY(-45px) scale(1.5); }
+    }
+    .sun-rays { animation: sunPulse 4s ease-in-out infinite; transform-origin: center; }
+    @keyframes sunPulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.15); opacity: 1; } }
+    .cloud { animation: drift 45s linear infinite; }
+    .cloud-2 { animation: drift 60s linear infinite; animation-delay: -15s; }
+    @keyframes drift { from { transform: translateX(-200px); } to { transform: translateX(1400px); } }
+    .grass-sway { animation: sway 3s ease-in-out infinite; transform-origin: bottom; }
+    @keyframes sway { 0%, 100% { transform: rotate(-3deg); } 50% { transform: rotate(3deg); } }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+<div x-data="cifligim()" x-init="init()" x-cloak class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between shadow-sm">
+    <div class="flex items-center gap-3">
+      <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 via-emerald-600 to-emerald-800 flex items-center justify-center text-white text-2xl shadow-lg shadow-emerald-200">🐄</div>
+      <div>
+        <div class="text-[10px] font-bold tracking-wider text-emerald-700 uppercase">DairyMind™ · Dijital İkiz</div>
+        <div class="text-lg font-bold text-slate-900 game-font" x-text="submission?.farm_name || 'Çiftliğim'"></div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <a :href="`/anket/${submissionId}`" class="px-3 py-1.5 text-xs font-semibold text-emerald-700 hover:text-emerald-900 rounded-md hover:bg-emerald-50 transition">← Ankete Dön</a>
+    </div>
+  </header>
+
+  <div class="flex-1 grid lg:grid-cols-[340px_1fr] gap-0">
+
+    <!-- Sidebar (status) -->
+    <aside class="bg-white border-r border-slate-200 p-5 overflow-y-auto" style="max-height: calc(100vh - 60px);">
+      <div class="mb-5">
+        <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1 game-font">DİJİTAL İKİZ DURUMU</div>
+        <h2 class="text-lg font-bold text-slate-900 game-font">Çiftlik Yapıları</h2>
+        <p class="text-xs text-slate-500 mt-1" x-show="submission">
+          <span x-text="submission?.farmer_name"></span> · <span x-text="submission?.farm_name"></span>
+        </p>
+      </div>
+
+      <div class="mb-4 p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-emerald-50 to-sky-50 border-2 border-emerald-200">
+        <div class="flex items-center justify-between mb-2">
+          <span class="text-xs font-bold text-emerald-900 game-font">İNŞA DURUMU</span>
+          <span class="text-sm font-mono font-bold text-emerald-700"><span x-text="built"></span>/32</span>
+        </div>
+        <div class="h-2 bg-emerald-100 rounded-full overflow-hidden">
+          <div class="h-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all" :style="`width: ${Math.round(built/32*100)}%`"></div>
+        </div>
+        <div x-show="built === 32" x-cloak class="mt-2 text-xs font-bold text-emerald-700 text-center">🎉 Tüm yapılar tamamlandı!</div>
+        <div x-show="built === 0" x-cloak class="mt-2 text-xs text-amber-700 text-center">Henüz hiç yapı inşa edilmedi.</div>
+      </div>
+
+      <!-- Tab switcher -->
+      <div class="flex gap-1 p-0.5 bg-slate-100 rounded-lg mb-4">
+        <button @click="tab='edit'" :class="tab==='edit' ? 'bg-white shadow text-emerald-700' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-1.5 rounded-md text-xs font-bold transition">✏ Düzenle</button>
+        <button @click="tab='built'" :class="tab==='built' ? 'bg-white shadow text-emerald-700' : 'text-slate-500 hover:text-slate-700'" class="flex-1 py-1.5 rounded-md text-xs font-bold transition">📋 Yapılar</button>
+      </div>
+
+      <!-- ===== EDIT TAB — quick fill controls for ALL 32 visualizable fields ===== -->
+      <div x-show="tab==='edit'" x-cloak>
+        <div class="mb-3 p-2 rounded-lg bg-amber-50 border border-amber-200">
+          <div class="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Hızlı Düzenle</div>
+          <div class="text-[11px] text-amber-700">Değişiklikler anket cevaplarına da kaydedilir.</div>
+          <div x-show="saveStatus" x-cloak class="text-[10px] mt-1 font-bold" :class="saveStatus.includes('hata') ? 'text-rose-700' : 'text-emerald-700'" x-text="saveStatus"></div>
+        </div>
+
+        <!-- Arazi & Tarla -->
+        <details open class="mb-2">
+          <summary class="cursor-pointer text-xs font-bold text-emerald-700 uppercase tracking-wider px-2 py-1 bg-emerald-50 rounded">🌾 Arazi & Tarla</summary>
+          <div class="mt-2 space-y-2 pl-1">
+            <label class="block text-xs"><span class="font-semibold text-slate-600">2.1 Toplam arazi (dönüm)</span><input type="number" min="0" max="500" :value="numAns('q_2_2_1')" @input="setAns('q_2_2_1', 2, '2.1', 'Toplam arazi', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">2.4 Yem arazisi (dönüm)</span><input type="number" min="0" max="200" :value="numAns('q_2_2_4')" @input="setAns('q_2_2_4', 2, '2.4', 'Yem arazisi', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">6.4 Mısır silajı (ton)</span><input type="number" min="0" max="3000" :value="numAns('q_6_6_4')" @input="setAns('q_6_6_4', 6, '6.4', 'Mısır silajı', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="flex items-center gap-2 text-xs"><input type="checkbox" :checked="answers['q_2_2_5'] === 'Evet, yıl boyu yeterli'" @change="setAns('q_2_2_5', 2, '2.5', 'Sulama', $event.target.checked ? 'Evet, yıl boyu yeterli' : null)" class="accent-emerald-600"><span class="font-semibold text-slate-600">2.5 Sulama var</span></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">6.19 Yem deposu (ay)</span><input type="number" min="0" max="12" :value="numAns('q_6_6_19')" @input="setAns('q_6_6_19', 6, '6.19', 'Yem deposu', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+          </div>
+        </details>
+
+        <!-- Ahır -->
+        <details class="mb-2">
+          <summary class="cursor-pointer text-xs font-bold text-amber-700 uppercase tracking-wider px-2 py-1 bg-amber-50 rounded">🏠 Ahır</summary>
+          <div class="mt-2 space-y-2 pl-1">
+            <div class="text-[11px] font-bold text-slate-600">2.7 Ahır tipi</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Serbest dolaşımlı (free-stall)','Serbest'],['Bağlı sistem (tie-stall)','Bağlı'],['Açık padok (Open lot)','Açık']]" :key="o[0]">
+                <button @click="setAns('q_2_2_7', 2, '2.7', 'Ahır tipi', answers['q_2_2_7'] === o[0] ? null : o[0])" :class="answers['q_2_2_7'] === o[0] ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">2.8 Alan (m²)</span><input type="number" min="0" max="3000" :value="numAns('q_2_2_8')" @input="setAns('q_2_2_8', 2, '2.8', 'Ahır alanı', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">2.9 Kapasite (baş)</span><input type="number" min="0" max="500" :value="numAns('q_2_2_9')" @input="setAns('q_2_2_9', 2, '2.9', 'Kapasite', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <div class="text-[11px] font-bold text-slate-600">2.12 Soğutma</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Sadece fan','Fan'],['Sadece duş/sprey','Duş'],['Fan ve duş sistemi','Fan+Duş'],['Doğal havalandırma','Doğal']]" :key="o[0]">
+                <button @click="setAns('q_2_2_12', 2, '2.12', 'Soğutma', answers['q_2_2_12'] === o[0] ? null : o[0])" :class="answers['q_2_2_12'] === o[0] ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <div class="text-[11px] font-bold text-slate-600">2.13 Aydınlatma</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['LED','LED'],['Floresan','Floresan'],['Halojen','Halojen'],['Doğal ışık + yapay karma','Karma'],['Sadece doğal ışık','Doğal']]" :key="o[0]">
+                <button @click="setAns('q_2_2_13', 2, '2.13', 'Aydınlatma', answers['q_2_2_13'] === o[0] ? null : o[0])" :class="answers['q_2_2_13'] === o[0] ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <div class="text-[11px] font-bold text-slate-600">2.15 Havalandırma</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Doğal (yan açık + çatı)','Doğal'],['Mekanik (fanlı)','Mekanik'],['Karma','Karma']]" :key="o[0]">
+                <button @click="setAns('q_2_2_15', 2, '2.15', 'Havalandırma', answers['q_2_2_15'] === o[0] ? null : o[0])" :class="answers['q_2_2_15'] === o[0] ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <div class="text-[11px] font-bold text-slate-600">2.16 Yataklık (çoklu)</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Sap/saman','Saman'],['Kum','Kum'],['Talaş','Talaş'],['Lastik mat','Lastik'],['Vakumlu yatak (waterbed)','Waterbed']]" :key="o[0]">
+                <button @click="toggleMulti('q_2_2_16', 2, '2.16', 'Yataklık', o[0])" :class="(answers['q_2_2_16'] || []).includes(o[0]) ? 'bg-amber-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+          </div>
+        </details>
+
+        <!-- Sağım & Tank -->
+        <details class="mb-2">
+          <summary class="cursor-pointer text-xs font-bold text-sky-700 uppercase tracking-wider px-2 py-1 bg-sky-50 rounded">🤖 Sağım & Tank</summary>
+          <div class="mt-2 space-y-2 pl-1">
+            <div class="text-[11px] font-bold text-slate-600">2.17 Sağım sistemi</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Balık sırtı (herringbone)','Klasik'],['Karusel (rotary)','Karusel'],['Robotik (AMS)','Robot']]" :key="o[0]">
+                <button @click="setAns('q_2_2_17', 2, '2.17', 'Sağım', answers['q_2_2_17'] === o[0] ? null : o[0])" :class="answers['q_2_2_17'] === o[0] ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">2.19 Tank kapasite (L)</span><input type="number" min="0" max="10000" :value="numAns('q_2_2_19')" @input="setAns('q_2_2_19', 2, '2.19', 'Tank L', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <div class="text-[11px] font-bold text-slate-600">2.20 Tank tipi</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Açık tip (DX)','DX'],['Kapalı tip (IBT - Ice Bank)','IBT'],['Doğrudan genleşmeli','Direkt'],['Ön soğutucu + tank','Ön Soğ.']]" :key="o[0]">
+                <button @click="setAns('q_2_2_20', 2, '2.20', 'Tank tipi', answers['q_2_2_20'] === o[0] ? null : o[0])" :class="answers['q_2_2_20'] === o[0] ? 'bg-sky-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+          </div>
+        </details>
+
+        <!-- Silaj & Enerji & Su & Gübre -->
+        <details class="mb-2">
+          <summary class="cursor-pointer text-xs font-bold text-lime-700 uppercase tracking-wider px-2 py-1 bg-lime-50 rounded">⚡ Silaj · Enerji · Su · Gübre</summary>
+          <div class="mt-2 space-y-2 pl-1">
+            <div class="text-[11px] font-bold text-slate-600">2.23 Silaj</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Evet, beton silo','Beton'],['Evet, yığın silaj','Yığın'],['Balya silaj','Balya']]" :key="o[0]">
+                <button @click="setAns('q_2_2_23', 2, '2.23', 'Silaj', answers['q_2_2_23'] === o[0] ? null : o[0])" :class="answers['q_2_2_23'] === o[0] ? 'bg-lime-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">2.24 Silaj kapasite (ton)</span><input type="number" min="0" max="1000" :value="numAns('q_2_2_24')" @input="setAns('q_2_2_24', 2, '2.24', 'Silaj ton', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="flex items-center gap-2 text-xs"><input type="checkbox" :checked="answers['q_2_2_21'] === 'Evet'" @change="setAns('q_2_2_21', 2, '2.21', 'TMR mikser', $event.target.checked ? 'Evet' : null)" class="accent-lime-600"><span class="font-semibold text-slate-600">2.21 TMR mikser var</span></label>
+            <div class="text-[11px] font-bold text-slate-600">2.25 Enerji</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Sadece şebeke','Şebeke'],['Şebeke + güneş enerjisi','Karma']]" :key="o[0]">
+                <button @click="setAns('q_2_2_25', 2, '2.25', 'Enerji', answers['q_2_2_25'] === o[0] ? null : o[0])" :class="answers['q_2_2_25'] === o[0] ? 'bg-lime-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <div class="text-[11px] font-bold text-slate-600">2.6 Su kaynağı (çoklu)</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Kuyu suyu','Kuyu'],['Dere/Nehir','Dere'],['Şebeke suyu','Şebeke']]" :key="o[0]">
+                <button @click="toggleMulti('q_2_2_6', 2, '2.6', 'Su', o[0])" :class="(answers['q_2_2_6'] || []).includes(o[0]) ? 'bg-lime-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <div class="text-[11px] font-bold text-slate-600">2.28 Gübre</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Sıvı gübre lagünü','Lagün'],['Kompost','Kompost'],['Biyogaz tesisi','Biyogaz']]" :key="o[0]">
+                <button @click="setAns('q_2_2_28', 2, '2.28', 'Gübre', answers['q_2_2_28'] === o[0] ? null : o[0])" :class="answers['q_2_2_28'] === o[0] ? 'bg-lime-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+          </div>
+        </details>
+
+        <!-- Sürü -->
+        <details open class="mb-2">
+          <summary class="cursor-pointer text-xs font-bold text-rose-700 uppercase tracking-wider px-2 py-1 bg-rose-50 rounded">🐄 Sürü</summary>
+          <div class="mt-2 space-y-2 pl-1">
+            <label class="block text-xs"><span class="font-semibold text-slate-600">3.1 Toplam baş</span><input type="number" min="0" max="500" :value="numAns('q_3_3_1')" @input="setAns('q_3_3_1', 3, '3.1', 'Toplam', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">3.2 Sağmal</span><input type="number" min="0" max="300" :value="numAns('q_3_3_2')" @input="setAns('q_3_3_2', 3, '3.2', 'Sağmal', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">3.3 Kuru</span><input type="number" min="0" max="100" :value="numAns('q_3_3_3')" @input="setAns('q_3_3_3', 3, '3.3', 'Kuru', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">3.4 Düve</span><input type="number" min="0" max="100" :value="numAns('q_3_3_4')" @input="setAns('q_3_3_4', 3, '3.4', 'Düve', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">3.5 Buzağı</span><input type="number" min="0" max="100" :value="numAns('q_3_3_5')" @input="setAns('q_3_3_5', 3, '3.5', 'Buzağı', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">3.6 Boğa</span><input type="number" min="0" max="10" :value="numAns('q_3_3_6')" @input="setAns('q_3_3_6', 3, '3.6', 'Boğa', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <div class="text-[11px] font-bold text-slate-600">3.7 Irk</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['Holstein (Siyah Alaca)','Holstein'],['Simental','Simental'],['Jersey','Jersey']]" :key="o[0]">
+                <button @click="setAns('q_3_3_7', 3, '3.7', 'Irk', answers['q_3_3_7'] === o[0] ? null : o[0])" :class="answers['q_3_3_7'] === o[0] ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+          </div>
+        </details>
+
+        <!-- Süt & Beslenme & İşgücü -->
+        <details class="mb-2">
+          <summary class="cursor-pointer text-xs font-bold text-violet-700 uppercase tracking-wider px-2 py-1 bg-violet-50 rounded">🥛 Süt · Beslenme · İşgücü</summary>
+          <div class="mt-2 space-y-2 pl-1">
+            <label class="block text-xs"><span class="font-semibold text-slate-600">5.1 Yıllık süt (ton)</span><input type="number" min="0" max="2000" :value="numAns('q_5_5_1')" @input="setAns('q_5_5_1', 5, '5.1', 'Yıllık süt', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">5.2 İnek başı süt (kg)</span><input type="number" min="0" max="50" :value="numAns('q_5_5_2')" @input="setAns('q_5_5_2', 5, '5.2', 'İnek başı', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+            <div class="text-[11px] font-bold text-slate-600">6.1 Beslenme</div>
+            <div class="flex flex-wrap gap-1">
+              <template x-for="o in [['TMR (Tam Karma Rasyon)','TMR'],['Komponent (ayrı ayrı)','Komponent'],['Sadece mera','Mera']]" :key="o[0]">
+                <button @click="setAns('q_6_6_1', 6, '6.1', 'Beslenme', answers['q_6_6_1'] === o[0] ? null : o[0])" :class="answers['q_6_6_1'] === o[0] ? 'bg-violet-600 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'" class="px-2 py-1 rounded text-[10px] font-bold" x-text="o[1]"></button>
+              </template>
+            </div>
+            <label class="flex items-center gap-2 text-xs"><input type="checkbox" :checked="answers['q_6_6_27'] === 'Evet, full otomatik'" @change="setAns('q_6_6_27', 6, '6.27', 'Oto yemleme', $event.target.checked ? 'Evet, full otomatik' : null)" class="accent-violet-600"><span class="font-semibold text-slate-600">6.27 Otomatik yemleme</span></label>
+            <label class="block text-xs"><span class="font-semibold text-slate-600">8.1 Çalışan sayısı</span><input type="number" min="0" max="50" :value="numAns('q_8_8_1')" @input="setAns('q_8_8_1', 8, '8.1', 'Çalışan', $event.target.value === '' ? null : Number($event.target.value))" class="w-full mt-0.5 px-2 py-1 rounded border border-slate-300 text-xs"></label>
+          </div>
+        </details>
+      </div>
+
+      <!-- ===== BUILT TAB ===== -->
+      <div x-show="tab==='built'" x-cloak class="space-y-2">
+        <template x-for="item in builtItems" :key="item.key">
+          <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-emerald-50/60 border border-emerald-200">
+            <span class="text-2xl" x-text="item.icon"></span>
+            <div class="flex-1 min-w-0">
+              <div class="text-[10px] font-bold text-emerald-700 uppercase tracking-wider" x-text="item.cat"></div>
+              <div class="text-sm font-semibold text-slate-800 truncate" x-text="item.label"></div>
+            </div>
+            <span class="text-emerald-600 font-bold">✓</span>
+          </div>
+        </template>
+        <template x-for="item in missingItems" :key="item.key">
+          <div class="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-slate-50 border border-slate-200 opacity-60">
+            <span class="text-2xl grayscale">⬜</span>
+            <div class="flex-1">
+              <div class="text-[10px] font-bold text-slate-500 uppercase tracking-wider" x-text="item.cat"></div>
+              <div class="text-xs text-slate-500" x-text="item.label"></div>
+            </div>
+          </div>
+        </template>
+      </div>
+
+      <a :href="`/anket/${submissionId}`" class="mt-5 block w-full text-center py-2.5 rounded-xl bg-emerald-600 text-white text-sm font-semibold hover:bg-emerald-700 transition shadow-md">
+        ← Anketi Düzenle
+      </a>
+    </aside>
+
+    <!-- Stage -->
+    <main class="stage-bg relative overflow-hidden" style="min-height: calc(100vh - 60px);">
+
+      <!-- Vue 3 farm-engine web component — all 33 visuals -->
+      <dm-farm-scene
+        :state="JSON.stringify(farm)"
+        :layout="layoutJson"
+        style="display:block; width:100%; height:100%;"
+      ></dm-farm-scene>
+
+      <!-- Empty state overlay -->
+      <div x-show="built === 0 && !loading" x-cloak class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div class="bg-white/95 backdrop-blur px-7 py-5 rounded-3xl shadow-xl text-center border-2 border-amber-200 pointer-events-auto">
+          <div class="text-5xl mb-3">🏗️</div>
+          <div class="text-base font-bold text-slate-800">Henüz hiç yapı yok</div>
+          <div class="text-xs text-slate-500 mt-1">Çiftliğinizi inşa etmek için ankete dönün</div>
+          <a :href="`/anket/${submissionId}`" class="inline-block mt-4 px-5 py-2 rounded-xl bg-emerald-600 text-white text-sm font-bold hover:bg-emerald-700 transition">← Ankete Dön</a>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+function cifligim() {
+  const ICONS = {
+    barn: '🏠', parlor: '🤖', tank: '🥛', silo: '🌾',
+    energy: '⚡', water: '💧', manure: '♻️', herdSize: '🐄'
+  };
+  const CAT_LABELS = {
+    barn: 'Ahır', parlor: 'Sağım Sistemi', tank: 'Süt Tankı', silo: 'Silaj Deposu',
+    energy: 'Enerji', water: 'Su Kaynağı', manure: 'Atık Yönetimi', herdSize: 'Sürü'
+  };
+  return {
+    submissionId: null,
+    accessToken: null,
+    submission: null,
+    answers: {},
+    loading: true,
+    tab: 'edit',
+    layoutJson: '',
+    saveStatus: '',
+    saveQueue: [],
+    saveTimer: null,
+    init() {
+      this.submissionId = window.location.pathname.split('/').pop();
+      const savedId = localStorage.getItem('dm_submission_id');
+      const savedTok = localStorage.getItem('dm_access_token');
+      if (savedId === this.submissionId && savedTok) this.accessToken = savedTok;
+      this.load();
+    },
+    authHeaders(extra) {
+      const h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+      if (this.accessToken) h['x-access-token'] = this.accessToken;
+      return h;
+    },
+    async load() {
+      try {
+        const r = await fetch(`/api/submissions/${this.submissionId}`, { headers: this.authHeaders() });
+        if (!r.ok) {
+          // 404 missing, 403 no token for this device → back to start/resume
+          if (r.status === 404 || r.status === 403) window.location.href = '/';
+          return;
+        }
+        const d = await r.json();
+        this.submission = d.submission;
+        this.answers = d.answers || {};
+        try {
+          const lr = await fetch('/api/layout');
+          const ld = await lr.json();
+          this.layoutJson = ld.layout ? JSON.stringify(ld.layout) : '';
+        } catch {}
+      } catch (e) { console.error(e); }
+      finally { this.loading = false; }
+    },
+    get farm() {
+      return window.DMFarmMapper ? window.DMFarmMapper.mapAnswersToFarm(this.answers) : {};
+    },
+    get built() {
+      return window.DMFarmMapper ? window.DMFarmMapper.countBuilt(this.farm) : 0;
+    },
+    get builtItems() {
+      const out = [];
+      for (const k of ['barn','parlor','tank','silo','energy','water','manure']) {
+        if (this.farm[k]) {
+          out.push({ key: k, cat: CAT_LABELS[k], icon: ICONS[k], label: window.DMFarmMapper.labelFor(k, this.farm[k]) });
+        }
+      }
+      if (this.farm.herdSize > 0) {
+        out.push({ key: 'herdSize', cat: CAT_LABELS.herdSize, icon: ICONS.herdSize, label: `${this.farm.herdSize} baş sürü` });
+      }
+      return out;
+    },
+    bedColor(b) {
+      const m = { sand: '#fde68a', sawdust: '#fb923c', rubber: '#1e293b', straw: '#facc15', waterbed: '#3b82f6', compost: '#78350f' };
+      return m[b] || '#94a3b8';
+    },
+
+    // ----- Quick-fill helpers -----
+    numAns(qid) {
+      const v = this.answers[qid];
+      return (v === null || v === undefined || v === '') ? '' : v;
+    },
+    setAns(qid, sectionId, qno, qtext, value) {
+      // Update local + queue backend save
+      if (value === null || value === '') {
+        delete this.answers[qid];
+      } else {
+        this.answers[qid] = value;
+      }
+      this.queueSave({ section_id: sectionId, question_id: qid, question_no: qno, question_text: qtext, value });
+    },
+    toggleMulti(qid, sectionId, qno, qtext, opt) {
+      const cur = Array.isArray(this.answers[qid]) ? [...this.answers[qid]] : [];
+      const i = cur.indexOf(opt);
+      if (i >= 0) cur.splice(i, 1); else cur.push(opt);
+      this.answers[qid] = cur;
+      this.queueSave({ section_id: sectionId, question_id: qid, question_no: qno, question_text: qtext, value: cur });
+    },
+    queueSave(item) {
+      this.saveQueue.push(item);
+      this.saveStatus = 'Kaydediliyor…';
+      clearTimeout(this.saveTimer);
+      this.saveTimer = setTimeout(() => this.flushSave(), 500);
+    },
+    async flushSave() {
+      if (!this.saveQueue.length) return;
+      const batch = this.saveQueue.splice(0, this.saveQueue.length);
+      try {
+        const r = await fetch(`/api/submissions/${this.submissionId}/answers`, {
+          method: 'POST',
+          headers: this.authHeaders(),
+          body: JSON.stringify(batch)
+        });
+        if (!r.ok) throw new Error('Server hatası');
+        this.saveStatus = '✓ Kaydedildi';
+        setTimeout(() => { this.saveStatus = ''; }, 1800);
+      } catch (e) {
+        this.saveStatus = '⚠ Kayıt hatası — tekrar deneyin';
+        this.saveQueue.unshift(...batch);
+      }
+    },
+    get missingItems() {
+      const out = [];
+      for (const k of ['barn','parlor','tank','silo','energy','water','manure']) {
+        if (!this.farm[k]) out.push({ key: k, cat: CAT_LABELS[k], label: 'Henüz cevaplanmadı' });
+      }
+      if (this.farm.herdSize === 0) out.push({ key: 'herdSize', cat: CAT_LABELS.herdSize, label: 'Henüz girilmedi' });
+      return out;
+    }
+  }
+}
+</script>
+</body>
+</html>

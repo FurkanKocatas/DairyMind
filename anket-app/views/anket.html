@@ -1,0 +1,992 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DairyMind™ — Anket</title>
+  <link rel="stylesheet" href="/vendor/tailwind.css?v=20260614d" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Fredoka:wght@500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/style.css" />
+  <script src="/validators.js"></script>
+  <script src="/farm-mapper.js"></script>
+  <!-- Vue 3 farm-engine web component (all 33 component visuals) -->
+  <link rel="stylesheet" href="/farm-engine/farm-engine.css?v=20260614b" />
+  <script src="/farm-engine/farm-scene.js?v=20260614b" defer></script>
+  
+  <style>
+    .game-font { font-family: 'Fredoka', sans-serif; }
+    .farm-bg {
+      background:
+        radial-gradient(ellipse at 80% 10%, rgba(253, 224, 71, 0.35) 0%, transparent 50%),
+        linear-gradient(180deg, #e0f2fe 0%, #bae6fd 25%, #d9f99d 60%, #86efac 100%);
+    }
+    .pop-in { animation: popIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards; transform-origin: center bottom; }
+    @keyframes popIn {
+      0%   { opacity: 0; transform: translateY(40px) scale(0.4) rotate(-4deg); }
+      55%  { opacity: 1; transform: translateY(-6px) scale(1.06) rotate(1.5deg); }
+      100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+    }
+    .cow-bob { animation: cowBob 3s ease-in-out infinite; }
+    @keyframes cowBob { 0%, 100% { transform: translateY(0); } 50% { transform: translateY(-2px); } }
+    .cow-walk-iso { animation: cowWalkIso 13s ease-in-out infinite; }
+    @keyframes cowWalkIso {
+      0%   { transform: translate(0, 0); }
+      45%  { transform: translate(70px, 38px); }
+      50%  { transform: translate(70px, 38px) scaleX(-1); }
+      95%  { transform: translate(0, 0) scaleX(-1); }
+      100% { transform: translate(0, 0); }
+    }
+    .spin-slow { animation: spinIt 5s linear infinite; transform-origin: center; transform-box: fill-box; }
+    @keyframes spinIt { from { transform: rotate(0); } to { transform: rotate(360deg); } }
+    .pulse-soft { animation: pulseSoft 2.5s ease-in-out infinite; }
+    @keyframes pulseSoft { 0%, 100% { opacity: 0.75; } 50% { opacity: 1; } }
+    .smoke { animation: smokeRise 4.5s ease-in-out infinite; }
+    @keyframes smokeRise {
+      0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+      30%  { opacity: 0.7; }
+      100% { opacity: 0; transform: translateY(-35px) scale(1.5); }
+    }
+    .sun-rays { animation: sunPulse 4s ease-in-out infinite; transform-origin: center; }
+    @keyframes sunPulse { 0%, 100% { transform: scale(1); opacity: 0.6; } 50% { transform: scale(1.13); opacity: 1; } }
+    .cloud-drift { animation: cloudDrift 60s linear infinite; }
+    .cloud-drift-2 { animation: cloudDrift 80s linear infinite; animation-delay: -30s; }
+    @keyframes cloudDrift { from { transform: translateX(-100px); } to { transform: translateX(900px); } }
+    .build-flash { animation: flash 0.7s ease-out; }
+    @keyframes flash {
+      0%   { filter: brightness(1.8) drop-shadow(0 0 20px #fbbf24); }
+      100% { filter: brightness(1); }
+    }
+    .farm-toast-enter { animation: toastIn 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); }
+    @keyframes toastIn {
+      0%   { opacity: 0; transform: translateY(20px) scale(0.8); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+  </style>
+</head>
+<body class="font-sans bg-slate-50 min-h-screen antialiased text-slate-800">
+  <div x-data="anket()" x-init="init()" x-cloak class="min-h-screen">
+
+    <!-- Access denied overlay (no valid token for this submission) -->
+    <div x-show="accessDenied" x-cloak class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-7 text-center">
+        <div class="text-5xl mb-3">🔒</div>
+        <h2 class="text-xl font-bold text-slate-900">Erişim doğrulanamadı</h2>
+        <p class="text-sm text-slate-500 mt-2 leading-relaxed">Bu anketi açma yetkiniz bu cihazda bulunamadı. Telefon numaranızla doğrulama kodu alıp kaldığınız yerden devam edebilirsiniz.</p>
+        <a href="/" class="mt-5 inline-block w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-semibold shadow-md hover:from-emerald-700 hover:to-emerald-800 transition">
+          Doğrulama sayfasına git
+        </a>
+      </div>
+    </div>
+
+    <!-- KVKK consent gate (invite links: farmer must accept before the survey) -->
+    <div x-show="needsConsent && !accessDenied" x-cloak class="fixed inset-0 z-50 bg-slate-900/70 backdrop-blur flex items-center justify-center p-4">
+      <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-7">
+        <div class="text-center">
+          <div class="text-5xl mb-3">🐄</div>
+          <h2 class="text-xl font-bold text-slate-900">Hoş geldiniz</h2>
+          <p class="text-sm text-slate-500 mt-2 leading-relaxed">Başlamadan önce verilerinizin işlenmesine ilişkin KVKK onayını vermeniz gerekir.</p>
+        </div>
+        <label class="mt-5 flex items-start gap-2 cursor-pointer p-3 rounded-lg border"
+               :class="consentChecked ? 'border-emerald-300 bg-emerald-50/50' : 'border-slate-200'">
+          <input type="checkbox" x-model="consentChecked" class="mt-0.5 w-4 h-4 accent-emerald-600 shrink-0" />
+          <span class="text-xs text-slate-600 leading-relaxed">
+            <strong>KVKK Aydınlatma Onayı:</strong> Ad, telefon ve çiftlik verilerimin dijital ikiz oluşturma
+            amacıyla DairyMind tarafından işlenmesini kabul ediyorum. Verilerim 3. kişilerle paylaşılmaz ve
+            istediğim zaman silinmesini talep edebilirim.
+          </span>
+        </label>
+        <button @click="acceptConsent()" :disabled="!consentChecked || consentSaving"
+          class="mt-4 w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-semibold shadow-md hover:from-emerald-700 hover:to-emerald-800 transition disabled:opacity-50 disabled:cursor-not-allowed">
+          <span x-show="!consentSaving">Onaylıyorum, ankete başla</span>
+          <span x-show="consentSaving" x-cloak>Kaydediliyor…</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Offline / save-error banner -->
+    <div x-show="!online || saveError" x-cloak
+         :class="!online ? 'bg-orange-500' : 'bg-rose-600'"
+         class="sticky top-0 z-40 text-white text-sm font-medium px-4 py-2 flex items-center justify-center gap-2 text-center">
+      <span x-show="!online">⚠ İnternet bağlantısı yok — cevaplarınız cihazda saklanıyor, bağlantı gelince otomatik kaydedilecek.</span>
+      <span x-show="online && saveError" class="flex items-center gap-3">
+        <span>⚠ Cevaplar sunucuya kaydedilemedi — cihazda güvende.</span>
+        <button @click="flushSave()" class="underline font-bold hover:opacity-80">Tekrar dene</button>
+      </span>
+    </div>
+
+    <!-- Top bar -->
+    <header class="sticky top-0 z-30 bg-white/90 backdrop-blur border-b border-slate-200">
+      <div class="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center gap-3">
+        <a href="/" class="flex items-center gap-2 shrink-0">
+          <div class="w-9 h-9 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white">🐄</div>
+          <div class="hidden sm:block">
+            <div class="text-[10px] font-semibold tracking-wider text-emerald-700 uppercase">DairyMind™</div>
+            <div class="text-sm font-bold text-slate-900 -mt-0.5">Çiftlik Anketi</div>
+          </div>
+        </a>
+
+        <div class="flex-1 mx-2 md:mx-4">
+          <div class="flex items-center justify-between text-xs text-slate-500 mb-1">
+            <span x-text="`Bölüm ${currentSection?.id || '-'} / ${data?.total_sections || 14}`"></span>
+            <span><span x-text="answeredCount"></span> / <span x-text="data?.total_questions || 261"></span> cevap (%<span x-text="progressPct"></span>)</span>
+          </div>
+          <div class="h-2 bg-slate-200 rounded-full overflow-hidden">
+            <div class="h-full bg-gradient-to-r from-emerald-500 to-sky-500 transition-all duration-500" :style="`width: ${progressPct}%`"></div>
+          </div>
+        </div>
+
+        <div class="flex items-center gap-2">
+          <span x-show="errorCount > 0" x-cloak class="text-xs text-rose-600 flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span>
+            <span x-text="`${errorCount} hata`"></span>
+          </span>
+          <span x-show="!online" x-cloak class="text-xs text-orange-600 flex items-center gap-1" title="İnternet bağlantısı yok">
+            <span class="inline-block w-2 h-2 rounded-full bg-orange-500"></span>Çevrimdışı
+          </span>
+          <span x-show="online && saveError" x-cloak class="text-xs text-rose-600 flex items-center gap-1" title="Cevaplar sunucuya kaydedilemedi">
+            <span class="inline-block w-2 h-2 rounded-full bg-rose-500"></span>Kaydedilemedi
+          </span>
+          <span x-show="online && !saveError && saving" x-cloak class="text-xs text-slate-500 flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-amber-400 animate-pulse"></span>Kaydediliyor…
+          </span>
+          <span x-show="online && !saveError && !saving && lastSavedAt && errorCount === 0" x-cloak class="text-xs text-emerald-700 flex items-center gap-1">
+            <span class="inline-block w-2 h-2 rounded-full bg-emerald-500"></span>Kaydedildi
+          </span>
+        </div>
+      </div>
+    </header>
+
+    <div class="max-w-[1400px] mx-auto px-4 md:px-8 py-8 grid lg:grid-cols-[280px_1fr] gap-8">
+
+      <!-- Sidebar -->
+      <aside class="lg:sticky lg:top-[88px] lg:self-start">
+        <div class="bg-white rounded-2xl border border-slate-200 p-3 shadow-sm">
+          <div class="px-2 pb-2 pt-1 text-xs font-bold text-slate-400 uppercase tracking-wider">Bölümler</div>
+          <nav class="space-y-1 max-h-[70vh] overflow-y-auto">
+            <template x-for="s in data?.sections || []" :key="s.id">
+              <button @click="goToSection(s.id)"
+                :class="currentSection?.id === s.id ? 'bg-emerald-50 border-emerald-300 text-emerald-900' : 'border-transparent hover:bg-slate-50 text-slate-700'"
+                class="w-full text-left px-3 py-2 rounded-lg border flex items-center gap-2 text-sm transition">
+                <span class="text-lg" x-text="s.icon"></span>
+                <span class="flex-1 truncate">
+                  <span class="block font-semibold text-xs text-slate-500" x-text="`Bölüm ${s.id}`"></span>
+                  <span class="block truncate text-[13px]" x-text="s.title"></span>
+                </span>
+                <span class="text-[11px] font-semibold px-1.5 py-0.5 rounded-md"
+                  :class="sectionProgress(s.id).pct === 100 ? 'bg-emerald-100 text-emerald-700' : sectionProgress(s.id).pct > 0 ? 'bg-amber-100 text-amber-700' : 'bg-slate-100 text-slate-500'"
+                  x-text="`${sectionProgress(s.id).answered}/${s.question_count}`"></span>
+              </button>
+            </template>
+          </nav>
+        </div>
+
+        <button @click="goToComplete()"
+          class="mt-3 w-full py-2.5 rounded-xl bg-gradient-to-r from-emerald-600 to-emerald-700 text-white text-sm font-semibold shadow-md hover:from-emerald-700 hover:to-emerald-800 transition">
+          ✓ Anketi Tamamla
+        </button>
+      </aside>
+
+      <!-- Questions -->
+      <main>
+        <div x-show="currentSection" class="space-y-8">
+          <!-- Section header -->
+          <div class="bg-white rounded-3xl border border-slate-200 p-7 md:p-8 shadow-sm">
+            <div class="flex items-start gap-5">
+              <div class="w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-100 via-emerald-50 to-sky-100 flex items-center justify-center text-4xl shrink-0 shadow-inner" x-text="currentSection?.icon"></div>
+              <div class="flex-1 min-w-0">
+                <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-widest game-font" x-text="`Bölüm ${currentSection?.id} / ${data?.total_sections || 14}`"></div>
+                <h1 class="text-2xl md:text-3xl font-extrabold text-slate-900 mt-1 game-font" x-text="currentSection?.title"></h1>
+                <p class="text-sm text-slate-500 mt-2 leading-relaxed" x-text="currentSection?.description"></p>
+              </div>
+            </div>
+          </div>
+
+          <!-- 🏗 Farm preview panel (live digital twin) -->
+          <div class="bg-white rounded-3xl border border-emerald-200 shadow-sm overflow-hidden">
+            <button @click="farmExpanded = !farmExpanded"
+              class="w-full px-6 py-4 flex items-center justify-between hover:bg-emerald-50/40 transition">
+              <div class="flex items-center gap-3 text-left">
+                <div class="w-11 h-11 rounded-2xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-xl shadow-md shadow-emerald-200">🏗</div>
+                <div>
+                  <div class="text-[11px] font-bold text-emerald-700 uppercase tracking-widest game-font">Dijital İkiziniz</div>
+                  <div class="text-base font-bold text-slate-900 game-font">Çiftliğim — canlı inşa</div>
+                </div>
+              </div>
+              <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-50 border border-emerald-200">
+                  <span class="text-xs font-bold text-emerald-700"><span x-text="farmBuilt"></span>/32 yapı</span>
+                </div>
+                <span class="text-slate-400 text-lg transition-transform" :class="farmExpanded ? 'rotate-180' : ''">▾</span>
+              </div>
+            </button>
+
+            <div x-show="farmExpanded" x-cloak x-transition>
+              <div class="px-6 pb-3">
+                <div class="h-1.5 bg-emerald-100 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-emerald-500 via-emerald-600 to-sky-500 transition-all duration-700" :style="`width: ${Math.round(farmBuilt/32*100)}%`"></div>
+                </div>
+              </div>
+
+              <div class="relative farm-bg" style="height: 380px;">
+                <!-- Vue 3 farm-engine web component — all 33 visuals, reactive to farm state -->
+                <dm-farm-scene
+                  :state="JSON.stringify(farm)"
+                  :layout="layoutJson"
+                  style="display:block; width:100%; height:100%;"
+                ></dm-farm-scene>
+
+                <!-- Empty state overlay -->
+                <div x-show="farmBuilt === 0" x-cloak class="absolute inset-0 flex items-center justify-center pointer-events-none">
+                  <div class="bg-white/90 backdrop-blur px-5 py-3 rounded-2xl shadow-md text-center border border-emerald-200">
+                    <div class="text-3xl mb-1">🏗️</div>
+                    <div class="text-sm font-bold text-slate-700">Yapısal soruları cevaplayın</div>
+                    <div class="text-[11px] text-slate-500 mt-0.5">Bölüm 2-3 — Ahır, Sağım, Süt Tankı, Sürü...</div>
+                  </div>
+                </div>
+
+                <!-- Toast -->
+                <div x-show="farmToast" x-cloak class="farm-toast-enter absolute bottom-4 right-4 bg-gradient-to-r from-emerald-500 to-emerald-700 text-white px-4 py-2.5 rounded-xl shadow-lg z-10 border border-white/30">
+                  <div class="flex items-center gap-2">
+                    <span class="text-lg">✓</span>
+                    <div class="text-xs font-bold" x-text="farmToast"></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="px-5 py-3 bg-emerald-50/60 border-t border-emerald-100 flex items-center justify-between text-xs">
+                <div class="text-emerald-800 font-semibold">
+                  <span x-show="farmBuilt === 0">Henüz inşa edilmiş yapı yok</span>
+                  <span x-show="farmBuilt > 0 && farmBuilt < 32" x-cloak><span x-text="farmBuilt"></span>/32 yapı inşa edildi · devam edin</span>
+                  <span x-show="farmBuilt === 32" x-cloak class="text-emerald-700">🎉 Tüm yapılar tamamlandı!</span>
+                </div>
+                <a :href="`/cifligim/${submissionId}`" target="_blank"
+                  class="text-emerald-700 hover:text-emerald-900 font-bold flex items-center gap-1">Tam görüntüle →</a>
+              </div>
+            </div>
+          </div>
+
+          <!-- Questions list -->
+          <template x-for="q in currentSection?.questions || []" :key="q.id">
+            <div class="bg-white rounded-2xl border shadow-sm hover:shadow-md transition"
+                 :id="'q-' + q.id"
+                 :class="errors[q.id] ? 'border-rose-300' : (q.importance === 'KRİTİK' && !answered(q.id) ? 'border-rose-200' : 'border-slate-200')">
+              <div class="p-5 md:p-6">
+                <div class="flex items-start gap-3 mb-4">
+                  <div class="shrink-0 w-10 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-xs font-bold text-slate-600" x-text="q.no"></div>
+                  <div class="flex-1 min-w-0">
+                    <label class="block text-base font-semibold text-slate-900 leading-snug">
+                      <span x-text="q.text"></span>
+                      <span x-show="q.importance === 'KRİTİK'" class="text-rose-500" title="Zorunlu">*</span>
+                    </label>
+                    <div class="mt-1 flex flex-wrap gap-2 items-center">
+                      <span x-show="q.importance" x-cloak
+                        :class="{
+                          'bg-rose-100 text-rose-700': q.importance === 'KRİTİK',
+                          'bg-amber-100 text-amber-700': q.importance === 'YÜKSEK',
+                          'bg-slate-100 text-slate-600': q.importance === 'ORTA',
+                          'bg-sky-100 text-sky-700': q.importance === 'OPSIYONEL'
+                        }"
+                        class="text-[10px] font-bold px-2 py-0.5 rounded-md tracking-wider" x-text="q.importance"></span>
+                      <span x-show="q.module" x-cloak class="text-[10px] text-slate-500 px-2 py-0.5 rounded-md bg-slate-50 border border-slate-200" x-text="q.module"></span>
+                      <span x-show="answered(q.id) && !errors[q.id]" x-cloak class="text-[10px] text-emerald-700 font-semibold">✓ Cevaplandı</span>
+                    </div>
+                    <p x-show="q.help" x-cloak class="text-xs text-slate-500 mt-2 italic" x-text="q.help"></p>
+                  </div>
+                </div>
+
+                <div class="pl-0 md:pl-13">
+
+                  <!-- Number / Year -->
+                  <template x-if="q.type === 'number' || q.type === 'year'">
+                    <div>
+                      <div class="flex items-center gap-2">
+                        <input type="text" inputmode="decimal" autocomplete="off"
+                          :placeholder="q.placeholder || q.unit || (q.integer ? 'Tam sayı' : 'Sayı')"
+                          :value="numberStrings[q.id] ?? ''"
+                          @input="onNumberInput(q, $event.target)"
+                          @blur="onNumberBlur(q, $event.target)"
+                          :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                          class="w-full md:w-72 px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition font-mono" />
+                        <span class="text-sm text-slate-500 whitespace-nowrap" x-show="q.unit" x-text="q.unit"></span>
+                      </div>
+                      <div class="mt-1 flex gap-3 text-[11px] text-slate-400">
+                        <span x-show="q.min != null">Min: <span x-text="q.min"></span></span>
+                        <span x-show="q.max != null">Max: <span x-text="q.max"></span></span>
+                        <span x-show="q.integer">Tam sayı</span>
+                        <span x-show="!q.integer && q.step">Adım: <span x-text="q.step"></span></span>
+                        <span x-show="q.allow_negative" class="text-amber-500">Negatif olabilir</span>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Year or "Yok" -->
+                  <template x-if="q.type === 'year_or_none'">
+                    <input type="text" autocomplete="off"
+                      :placeholder="q.placeholder"
+                      :value="answers[q.id] ?? ''"
+                      @input="onYearOrNoneInput(q, $event.target)"
+                      @blur="validateYearOrNone(q)"
+                      :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                      class="w-full md:w-72 px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition" />
+                  </template>
+
+                  <!-- Month/Year picker -->
+                  <template x-if="q.type === 'month_year'">
+                    <input type="month" :value="answers[q.id] ?? ''"
+                      @change="setAnswer(q, $event.target.value)"
+                      class="w-full md:w-72 px-4 py-2.5 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" />
+                  </template>
+
+                  <!-- Textarea -->
+                  <template x-if="q.type === 'textarea'">
+                    <textarea :placeholder="q.placeholder" rows="3"
+                      :value="answers[q.id] ?? ''"
+                      @input="setAnswer(q, $event.target.value)"
+                      class="w-full px-4 py-2.5 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition resize-y"></textarea>
+                  </template>
+
+                  <!-- Ranked text (top-N) -->
+                  <template x-if="q.type === 'ranked_text'">
+                    <div class="space-y-2">
+                      <template x-for="(label, idx) in q.labels" :key="idx">
+                        <div class="flex items-center gap-2">
+                          <div class="shrink-0 w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 flex items-center justify-center text-xs font-bold" x-text="idx + 1"></div>
+                          <input type="text" :placeholder="label"
+                            :value="(answers[q.id] || [])[idx] || ''"
+                            @input="setRankedItem(q, idx, $event.target.value)"
+                            class="flex-1 px-4 py-2 rounded-lg border border-slate-300 focus:border-emerald-500 focus:ring-2 focus:ring-emerald-100 outline-none transition" />
+                        </div>
+                      </template>
+                    </div>
+                  </template>
+
+                  <!-- Text / select_text / multi_text / generic text-like -->
+                  <template x-if="['text','select_text','multi_text'].includes(q.type)">
+                    <input type="text" :placeholder="q.placeholder || 'Cevabınızı yazın'"
+                      :value="answers[q.id] ?? ''"
+                      @input="setAnswer(q, $event.target.value)"
+                      @blur="validateOne(q)"
+                      :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                      class="w-full px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition" />
+                  </template>
+
+                  <!-- TC or VKN -->
+                  <template x-if="q.type === 'tc_or_vkn'">
+                    <input type="text" inputmode="numeric" maxlength="11" :placeholder="q.placeholder"
+                      :value="answers[q.id] ?? ''"
+                      @input="setAnswer(q, $event.target.value.replace(/\D/g,''))"
+                      @blur="validateOne(q)"
+                      :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                      class="w-full md:w-72 px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition font-mono" />
+                  </template>
+
+                  <!-- Küpe -->
+                  <template x-if="q.type === 'kupe'">
+                    <input type="text" maxlength="16" :placeholder="q.placeholder"
+                      :value="answers[q.id] ?? ''"
+                      @input="setAnswer(q, DMValidators.normalizeKupe($event.target.value))"
+                      @blur="validateOne(q)"
+                      :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                      class="w-full md:w-72 px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition font-mono uppercase" />
+                  </template>
+
+                  <!-- Phone -->
+                  <template x-if="q.type === 'phone'">
+                    <input type="tel" :placeholder="q.placeholder"
+                      :value="answers[q.id] ?? ''"
+                      @input="setAnswer(q, $event.target.value)"
+                      @blur="setAnswer(q, DMValidators.normalizePhoneTR(answers[q.id])); validateOne(q)"
+                      :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                      class="w-full md:w-72 px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition" />
+                  </template>
+
+                  <!-- Email -->
+                  <template x-if="q.type === 'email'">
+                    <input type="email" :placeholder="q.placeholder"
+                      :value="answers[q.id] ?? ''"
+                      @input="setAnswer(q, $event.target.value)"
+                      @blur="validateOne(q)"
+                      :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                      class="w-full md:w-96 px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition" />
+                  </template>
+
+                  <!-- GPS -->
+                  <template x-if="q.type === 'gps'">
+                    <div class="space-y-2">
+                      <div class="flex flex-col sm:flex-row gap-2">
+                        <input type="text" :placeholder="q.placeholder"
+                          :value="answers[q.id] ?? ''"
+                          @input="setAnswer(q, $event.target.value)"
+                          @blur="validateOne(q)"
+                          :class="errors[q.id] ? 'border-rose-400 ring-rose-100' : 'border-slate-300 focus:border-emerald-500 focus:ring-emerald-100'"
+                          class="flex-1 px-4 py-2.5 rounded-lg border focus:ring-2 outline-none transition" />
+                        <button type="button" @click="getLocation(q)"
+                          class="px-4 py-2.5 rounded-lg bg-sky-50 border border-sky-200 text-sky-700 text-sm font-semibold hover:bg-sky-100 transition flex items-center gap-1">
+                          📍 Konumumu Al
+                        </button>
+                        <a x-show="answers[q.id]" :href="`https://www.google.com/maps?q=${encodeURIComponent(answers[q.id])}`" target="_blank"
+                          class="px-4 py-2.5 rounded-lg bg-slate-50 border border-slate-200 text-slate-700 text-sm font-semibold hover:bg-slate-100 transition flex items-center gap-1">
+                          🗺️ Haritada Aç
+                        </a>
+                      </div>
+                    </div>
+                  </template>
+
+                  <!-- Province select -->
+                  <template x-if="q.type === 'province_select'">
+                    <select :value="answers[q.id] ?? ''"
+                      @change="setAnswer(q, $event.target.value); clearDependents(q)"
+                      :class="errors[q.id] ? 'border-rose-400' : 'border-slate-300 focus:border-emerald-500'"
+                      class="w-full md:w-72 px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-100 outline-none transition bg-white">
+                      <option value="">— İl seçin —</option>
+                      <template x-for="p in provinces" :key="p.name">
+                        <option :value="p.name" :selected="answers[q.id] === p.name" x-text="p.name"></option>
+                      </template>
+                    </select>
+                  </template>
+
+                  <!-- District select (cascading) -->
+                  <template x-if="q.type === 'district_select'">
+                    <div>
+                      <select :value="answers[q.id] ?? ''"
+                        :disabled="!answers[q.depends_on]"
+                        @change="setAnswer(q, $event.target.value)"
+                        :class="errors[q.id] ? 'border-rose-400' : 'border-slate-300 focus:border-emerald-500'"
+                        class="w-full md:w-72 px-4 py-2.5 rounded-lg border focus:ring-2 focus:ring-emerald-100 outline-none transition bg-white disabled:bg-slate-100 disabled:text-slate-400">
+                        <option value="">— <span x-text="answers[q.depends_on] ? 'İlçe seçin' : 'Önce il seçin'"></span> —</option>
+                        <template x-for="d in districtsFor(answers[q.depends_on])" :key="d">
+                          <option :value="d" :selected="answers[q.id] === d" x-text="d"></option>
+                        </template>
+                      </select>
+                    </div>
+                  </template>
+
+                  <!-- Radio -->
+                  <template x-if="q.type === 'radio'">
+                    <div class="grid sm:grid-cols-2 gap-2">
+                      <template x-for="opt in q.options" :key="opt">
+                        <label class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 cursor-pointer transition"
+                          :class="answers[q.id] === opt ? 'border-emerald-500 bg-emerald-50' : ''">
+                          <input type="radio" :name="q.id" :value="opt"
+                            :checked="answers[q.id] === opt"
+                            @change="setAnswer(q, opt)"
+                            class="w-4 h-4 text-emerald-600 focus:ring-emerald-500" />
+                          <span class="text-sm text-slate-700" x-text="opt"></span>
+                        </label>
+                      </template>
+                    </div>
+                  </template>
+
+                  <!-- Checkbox -->
+                  <template x-if="q.type === 'checkbox'">
+                    <div class="grid sm:grid-cols-2 gap-2">
+                      <template x-for="opt in q.options" :key="opt">
+                        <label class="flex items-center gap-2 px-4 py-2.5 rounded-lg border border-slate-200 hover:border-emerald-300 hover:bg-emerald-50 cursor-pointer transition"
+                          :class="(answers[q.id] || []).includes(opt) ? 'border-emerald-500 bg-emerald-50' : ''">
+                          <input type="checkbox" :value="opt"
+                            :checked="(answers[q.id] || []).includes(opt)"
+                            @change="toggleCheckbox(q, opt)"
+                            class="w-4 h-4 text-emerald-600 focus:ring-emerald-500 rounded" />
+                          <span class="text-sm text-slate-700" x-text="opt"></span>
+                        </label>
+                      </template>
+                    </div>
+                  </template>
+
+                  <!-- Error msg -->
+                  <p x-show="errors[q.id]" x-cloak class="mt-2 text-sm text-rose-600 flex items-center gap-1">
+                    <span>⚠️</span>
+                    <span x-text="errors[q.id]"></span>
+                  </p>
+
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <!-- Nav buttons -->
+          <div class="flex items-center justify-between gap-3 pt-4">
+            <button @click="goToSection((currentSection?.id || 1) - 1)" :disabled="(currentSection?.id || 1) === 1"
+              class="px-5 py-2.5 rounded-lg border border-slate-300 bg-white text-slate-700 font-semibold hover:bg-slate-50 transition disabled:opacity-40 disabled:cursor-not-allowed">
+              ← Önceki Bölüm
+            </button>
+            <div class="text-xs text-slate-500 text-center">
+              Cevaplarınız otomatik kaydedilir · doğrulama anında çalışır
+            </div>
+            <button @click="(currentSection?.id || 1) === (data?.total_sections || 14) ? goToComplete() : goToSection((currentSection?.id || 1) + 1)"
+              class="px-5 py-2.5 rounded-lg bg-emerald-600 text-white font-semibold hover:bg-emerald-700 shadow-md transition">
+              <span x-text="(currentSection?.id || 1) === (data?.total_sections || 14) ? 'Tamamla ✓' : 'Sonraki Bölüm →'"></span>
+            </button>
+          </div>
+        </div>
+
+        <div x-show="loading" class="bg-white rounded-2xl border border-slate-200 p-8 text-center text-slate-500">
+          Yükleniyor...
+        </div>
+      </main>
+    </div>
+  </div>
+
+  <script>
+    function anket() {
+      return {
+        submissionId: null,
+        data: null,
+        provinces: [],
+        provinceMap: {},
+        answers: {},
+        errors: {},
+        numberStrings: {},
+        currentSectionId: 1,
+        saving: false,
+        lastSavedAt: null,
+        loading: true,
+        saveTimer: null,
+        pendingQueue: [],
+        accessToken: '',
+        saveError: false,      // last save failed (offline / server)
+        online: navigator.onLine,
+        accessDenied: false,   // no valid token for this submission
+        needsConsent: false,   // invite link not yet KVKK-accepted
+        consentChecked: false, // checkbox state on the consent gate
+        consentSaving: false,
+        farmExpanded: true,
+        farmToast: '',
+        farmToastTimer: null,
+        prevFarm: null,
+        layoutJson: '',
+
+        get currentSection() {
+          return this.data?.sections?.find(s => s.id === this.currentSectionId);
+        },
+        get farm() {
+          return window.DMFarmMapper ? window.DMFarmMapper.mapAnswersToFarm(this.answers) : {};
+        },
+        get farmBuilt() {
+          return window.DMFarmMapper ? window.DMFarmMapper.countBuilt(this.farm) : 0;
+        },
+        get answeredCount() {
+          let n = 0;
+          for (const k in this.answers) {
+            if (this.answered(k)) n++;
+          }
+          return n;
+        },
+        get progressPct() {
+          if (!this.data) return 0;
+          return Math.round((this.answeredCount / this.data.total_questions) * 100);
+        },
+        get errorCount() {
+          return Object.keys(this.errors).filter(k => this.errors[k]).length;
+        },
+
+        answered(qid) {
+          const v = this.answers[qid];
+          if (v === null || v === undefined || v === '') return false;
+          if (Array.isArray(v) && v.length === 0) return false;
+          return true;
+        },
+
+        get cacheKey() { return `dm_answers_${this.submissionId}`; },
+
+        // Access token for this submission. Two entry points:
+        //  1) Magic link from WhatsApp: token in URL (?t=...). Persist it, then scrub the URL.
+        //  2) Returning on the same device: from localStorage.
+        loadToken() {
+          const urlTok = new URLSearchParams(window.location.search).get('t');
+          if (urlTok) {
+            this.accessToken = urlTok;
+            try {
+              localStorage.setItem('dm_submission_id', this.submissionId);
+              localStorage.setItem('dm_access_token', urlTok);
+            } catch {}
+            // Remove token from the address bar / browser history
+            try { window.history.replaceState({}, '', `/anket/${this.submissionId}`); } catch {}
+            return;
+          }
+          const savedId = localStorage.getItem('dm_submission_id');
+          const savedTok = localStorage.getItem('dm_access_token');
+          if (savedId === this.submissionId && savedTok) this.accessToken = savedTok;
+        },
+        authHeaders(extra) {
+          const h = Object.assign({ 'Content-Type': 'application/json' }, extra || {});
+          if (this.accessToken) h['x-access-token'] = this.accessToken;
+          return h;
+        },
+
+        // KVKK gate: farmer accepts consent on first open of an invite link
+        async acceptConsent() {
+          if (!this.consentChecked || this.consentSaving) return;
+          this.consentSaving = true;
+          try {
+            const res = await fetch(`/api/submissions/${this.submissionId}/consent`, {
+              method: 'POST', headers: this.authHeaders(), body: JSON.stringify({ consent: true })
+            });
+            if (!res.ok) throw new Error('consent failed');
+            this.needsConsent = false;
+          } catch (e) {
+            alert('Onay kaydedilemedi. İnternet bağlantınızı kontrol edip tekrar deneyin.');
+          } finally {
+            this.consentSaving = false;
+          }
+        },
+
+        async init() {
+          this.submissionId = window.location.pathname.split('/').pop();
+          this.loadToken();
+
+          // Online/offline listeners
+          window.addEventListener('online',  () => { this.online = true;  this.flushSave(); });
+          window.addEventListener('offline', () => { this.online = false; });
+          // Warn before leaving with unsaved work
+          window.addEventListener('beforeunload', (e) => {
+            if (this.pendingQueue.length || this.saving) { e.preventDefault(); e.returnValue = ''; }
+          });
+
+          const [qres, pres, lres] = await Promise.all([
+            fetch('/api/questions'),
+            fetch('/api/provinces'),
+            fetch('/api/layout')
+          ]);
+          this.data = await qres.json();
+          const pd = await pres.json();
+          this.provinces = pd.provinces;
+          for (const p of this.provinces) this.provinceMap[p.name] = p.districts;
+          try { const ld = await lres.json(); this.layoutJson = ld.layout ? JSON.stringify(ld.layout) : ''; } catch {}
+
+          // Restore any locally cached answers first (offline safety net)
+          let cached = null;
+          try { cached = JSON.parse(localStorage.getItem(this.cacheKey) || 'null'); } catch {}
+
+          const sres = await fetch(`/api/submissions/${this.submissionId}`, { headers: this.authHeaders() });
+          if (sres.status === 403 || sres.status === 404) {
+            // No valid token → can't open this survey here. Send to resume.
+            this.accessDenied = true;
+            this.loading = false;
+            return;
+          }
+          if (sres.ok) {
+            const sd = await sres.json();
+            this.needsConsent = sd.needs_consent === true;  // invite link → KVKK gate first
+            this.answers = sd.answers || {};
+            // If local cache has answers the server doesn't yet (unsynced), merge + replay
+            if (cached && cached.answers) {
+              for (const [k, v] of Object.entries(cached.answers)) {
+                if (this.answers[k] === undefined) this.answers[k] = v;
+              }
+            }
+            // Restore number string display
+            for (const sec of this.data.sections) {
+              for (const q of sec.questions) {
+                if ((q.type === 'number' || q.type === 'year') && this.answers[q.id] != null) {
+                  this.numberStrings[q.id] = String(this.answers[q.id]).replace('.', ',');
+                }
+              }
+            }
+          }
+
+          const savedSection = parseInt(localStorage.getItem(`dm_section_${this.submissionId}`) || '1', 10);
+          this.currentSectionId = isNaN(savedSection) ? 1 : Math.min(Math.max(savedSection, 1), this.data.total_sections);
+
+          // Initialize farm state baseline (so existing answers don't trigger toast on load)
+          this.prevFarm = window.DMFarmMapper ? window.DMFarmMapper.mapAnswersToFarm(this.answers) : null;
+          // Auto-collapse if nothing built yet on first load
+          this.farmExpanded = this.farmBuilt > 0;
+
+          this.loading = false;
+        },
+
+        districtsFor(province) {
+          return this.provinceMap[province] || [];
+        },
+
+        clearDependents(q) {
+          // If province changes, clear district answers depending on it
+          for (const sec of this.data.sections) {
+            for (const dq of sec.questions) {
+              if (dq.depends_on === q.id) {
+                this.answers[dq.id] = '';
+                this.queueSave(dq, '');
+              }
+            }
+          }
+        },
+
+        setAnswer(q, value) {
+          this.answers[q.id] = value;
+          if (this.errors[q.id]) {
+            const r = window.DMValidators.validate(q, value);
+            if (r.ok) delete this.errors[q.id];
+            else this.errors[q.id] = r.msg;
+          }
+          this.queueSave(q, value);
+          this.detectFarmChange();
+        },
+        toggleCheckbox(q, opt) {
+          const arr = Array.isArray(this.answers[q.id]) ? [...this.answers[q.id]] : [];
+          const i = arr.indexOf(opt);
+          if (i >= 0) arr.splice(i, 1); else arr.push(opt);
+          this.answers[q.id] = arr;
+          this.queueSave(q, arr);
+          this.detectFarmChange();
+        },
+
+        detectFarmChange() {
+          if (!window.DMFarmMapper) return;
+          const newFarm = window.DMFarmMapper.mapAnswersToFarm(this.answers);
+          const prev = this.prevFarm || {};
+          // Find first key whose value changed (not null → something, or value differs)
+          for (const k of ['barn','parlor','tank','silo','energy','water','manure']) {
+            if (newFarm[k] !== prev[k] && newFarm[k]) {
+              const label = window.DMFarmMapper.labelFor(k, newFarm[k]);
+              this.showFarmToast(`${label} inşa edildi`);
+              if (!this.farmExpanded) this.farmExpanded = true;
+              break;
+            }
+          }
+          if (newFarm.herdSize !== (prev.herdSize || 0) && newFarm.herdSize > 0 && (prev.herdSize || 0) === 0) {
+            this.showFarmToast(`${newFarm.herdSize} baş sürü eklendi`);
+            if (!this.farmExpanded) this.farmExpanded = true;
+          }
+          this.prevFarm = newFarm;
+        },
+
+        showFarmToast(msg) {
+          this.farmToast = msg;
+          clearTimeout(this.farmToastTimer);
+          this.farmToastTimer = setTimeout(() => { this.farmToast = ''; }, 2500);
+        },
+
+        bedColor(b) {
+          const m = { sand: '#fde68a', sawdust: '#fb923c', rubber: '#1e293b', straw: '#facc15', waterbed: '#3b82f6', compost: '#78350f' };
+          return m[b] || '#94a3b8';
+        },
+        setRankedItem(q, idx, val) {
+          const arr = Array.isArray(this.answers[q.id]) ? [...this.answers[q.id]] : new Array(q.count || 3).fill('');
+          while (arr.length < (q.count || 3)) arr.push('');
+          arr[idx] = val;
+          this.answers[q.id] = arr;
+          this.queueSave(q, arr);
+        },
+
+        // ----- Strict number input handling -----
+        onNumberInput(q, el) {
+          const cursorPos = el.selectionStart;
+          const before = el.value;
+          const filtered = window.DMValidators.filterNumberString(before, {
+            integer: !!q.integer,
+            allow_negative: !!q.allow_negative
+          });
+          this.numberStrings[q.id] = filtered;
+          // Apply filtered string back to input
+          if (el.value !== filtered) {
+            el.value = filtered;
+            // Restore cursor (best-effort)
+            const delta = filtered.length - before.length;
+            try { el.setSelectionRange(cursorPos + delta, cursorPos + delta); } catch {}
+          }
+          const parsed = window.DMValidators.parseNumberSafe(filtered);
+          this.setAnswer(q, parsed);
+        },
+        onNumberBlur(q, el) {
+          let s = this.numberStrings[q.id] || '';
+          let n = window.DMValidators.parseNumberSafe(s);
+          if (n != null) {
+            // Apply integer enforcement
+            if (q.integer) n = Math.trunc(n);
+            // Clamp if min/max — but flag error instead of silent clamp
+            // Round to step if defined (best-effort)
+            if (q.step && q.step < 1) {
+              const dec = String(q.step).split('.')[1]?.length || 0;
+              n = parseFloat(n.toFixed(dec));
+            }
+            this.answers[q.id] = n;
+            this.numberStrings[q.id] = String(n).replace('.', ',');
+            this.queueSave(q, n);
+          }
+          this.validateOne(q);
+        },
+
+        // ----- year_or_none -----
+        onYearOrNoneInput(q, el) {
+          const v = el.value.trim();
+          // Allow "Yok" / "yok" / "YOK" — normalize to "Yok"
+          if (/^yok$/i.test(v)) {
+            this.setAnswer(q, 'Yok');
+            return;
+          }
+          // Strip non-digits, max 4
+          const digits = v.replace(/\D/g, '').slice(0, 4);
+          el.value = digits;
+          this.setAnswer(q, digits === '' ? null : digits);
+        },
+        validateYearOrNone(q) {
+          const v = this.answers[q.id];
+          if (v == null || v === '') { delete this.errors[q.id]; return; }
+          if (v === 'Yok') { delete this.errors[q.id]; return; }
+          const n = parseInt(v, 10);
+          if (!isFinite(n) || n < (q.min || 1900) || n > (q.max || 2030)) {
+            this.errors[q.id] = `${q.min || 1900}-${q.max || 2030} arası yıl veya 'Yok' yazın`;
+          } else {
+            delete this.errors[q.id];
+          }
+        },
+
+        validateOne(q) {
+          const r = window.DMValidators.validate(q, this.answers[q.id]);
+          if (r.ok) delete this.errors[q.id];
+          else this.errors[q.id] = r.msg;
+        },
+
+        // Persist all answers to localStorage so nothing is lost if the tab closes offline
+        cacheAnswers() {
+          try {
+            localStorage.setItem(this.cacheKey, JSON.stringify({ answers: this.answers, t: Date.now() }));
+          } catch {}
+        },
+
+        queueSave(q, value) {
+          this.pendingQueue.push({
+            section_id: this.currentSectionId,
+            question_id: q.id,
+            question_no: q.no,
+            question_text: q.text,
+            value
+          });
+          this.cacheAnswers();                 // local safety net first
+          clearTimeout(this.saveTimer);
+          this.saveTimer = setTimeout(() => this.flushSave(), 600);
+        },
+
+        async flushSave() {
+          if (!this.pendingQueue.length) return;
+          if (!navigator.onLine) { this.online = false; this.saveError = true; return; }
+          const batch = this.pendingQueue.splice(0, this.pendingQueue.length);
+          this.saving = true;
+          try {
+            const res = await fetch(`/api/submissions/${this.submissionId}/answers`, {
+              method: 'POST',
+              headers: this.authHeaders(),
+              body: JSON.stringify(batch)
+            });
+            if (res.status === 409) { this.pendingQueue.unshift(...batch); this.needsConsent = true; return; }
+            if (!res.ok) throw new Error('save failed ' + res.status);
+            this.lastSavedAt = Date.now();
+            this.saveError = false;
+            this.online = true;
+            // Synced → clear local cache snapshot
+            try { localStorage.removeItem(this.cacheKey); } catch {}
+          } catch (e) {
+            this.pendingQueue.unshift(...batch);   // re-queue, keep cache
+            this.saveError = true;
+          } finally {
+            this.saving = false;
+          }
+        },
+
+        sectionProgress(sid) {
+          const sec = this.data?.sections?.find(s => s.id === sid);
+          if (!sec) return { answered: 0, pct: 0 };
+          let n = 0;
+          for (const q of sec.questions) {
+            if (this.answered(q.id)) n++;
+          }
+          return { answered: n, pct: sec.question_count ? Math.round(n / sec.question_count * 100) : 0 };
+        },
+
+        async goToSection(id) {
+          if (id < 1 || id > this.data.total_sections) return;
+          await this.flushSave();
+          this.currentSectionId = id;
+          localStorage.setItem(`dm_section_${this.submissionId}`, String(id));
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        },
+
+        // Unanswered KRİTİK questions across all sections
+        missingCritical() {
+          const out = [];
+          for (const sec of this.data.sections) {
+            for (const q of sec.questions) {
+              if (q.importance === 'KRİTİK' && !this.answered(q.id)) out.push({ sec, q });
+            }
+          }
+          return out;
+        },
+
+        async goToComplete() {
+          // Validate format of answered questions
+          for (const sec of this.data.sections) {
+            for (const q of sec.questions) {
+              if (this.answered(q.id)) {
+                const r = window.DMValidators.validate(q, this.answers[q.id]);
+                if (!r.ok) this.errors[q.id] = r.msg;
+              }
+            }
+          }
+          if (this.errorCount > 0) {
+            const first = this.firstErrorLocation();
+            if (first) this.jumpTo(first.sec.id, first.q.id);
+            alert(`${this.errorCount} hatalı cevap var. Kırmızı işaretli alanları düzeltin.`);
+            return;
+          }
+
+          // Required: all KRİTİK questions must be answered
+          const missing = this.missingCritical();
+          if (missing.length > 0) {
+            const m = missing[0];
+            this.jumpTo(m.sec.id, m.q.id);
+            alert(`${missing.length} kritik soru boş. Tamamlamak için doldurmanız gerekir.\n\nİlk eksik: Bölüm ${m.sec.id} — ${m.q.no} ${m.q.text}`);
+            return;
+          }
+
+          await this.flushSave();
+          if (this.pendingQueue.length || this.saveError) {
+            alert('Bazı cevaplar henüz kaydedilmedi (internet sorunu olabilir). Lütfen bağlantınızı kontrol edip tekrar deneyin.');
+            return;
+          }
+          try {
+            const res = await fetch(`/api/submissions/${this.submissionId}/complete`, { method: 'POST', headers: this.authHeaders() });
+            if (!res.ok) throw new Error('complete failed');
+          } catch {
+            alert('Tamamlama kaydedilemedi. İnternet bağlantınızı kontrol edin.');
+            return;
+          }
+          window.location.href = `/tamamlandi/${this.submissionId}`;
+        },
+
+        firstErrorLocation() {
+          for (const sec of this.data.sections)
+            for (const q of sec.questions)
+              if (this.errors[q.id]) return { sec, q };
+          return null;
+        },
+        jumpTo(sectionId, qid) {
+          this.currentSectionId = sectionId;
+          localStorage.setItem(`dm_section_${this.submissionId}`, String(sectionId));
+          setTimeout(() => {
+            const el = document.getElementById('q-' + qid);
+            if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+          }, 300);
+        },
+
+        getLocation(q) {
+          if (!navigator.geolocation) {
+            alert('Tarayıcınız konum bilgisini desteklemiyor.');
+            return;
+          }
+          navigator.geolocation.getCurrentPosition(
+            (pos) => {
+              const v = `${pos.coords.latitude.toFixed(6)}, ${pos.coords.longitude.toFixed(6)}`;
+              this.setAnswer(q, v);
+              this.validateOne(q);
+            },
+            (err) => alert('Konum alınamadı: ' + err.message),
+            { enableHighAccuracy: true, timeout: 10000 }
+          );
+        }
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,2183 @@
+{
+  "_doc": "Per-question overrides merged on top of extract.py output. Keys are question IDs (q_<sectionId>_<no with underscores>). Override fields: type, options, validation, placeholder, help, depends_on, min, max.",
+  "q_1_1_2": {
+    "type": "radio",
+    "options": [
+      "Şahıs İşletmesi",
+      "Limited Şirket (Ltd.)",
+      "Anonim Şirket (A.Ş.)",
+      "Kooperatif",
+      "Aile İşletmesi",
+      "Adi Ortaklık"
+    ]
+  },
+  "q_1_1_3": {
+    "type": "tc_or_vkn",
+    "placeholder": "11 haneli TC veya 10 haneli VKN",
+    "help": "Şahıs için TC kimlik, şirket için 10 haneli vergi numarası",
+    "validation": {
+      "custom": "tc_or_vkn"
+    }
+  },
+  "q_1_1_4": {
+    "type": "kupe",
+    "placeholder": "TR + 12 hane (örn: TR042234567890)",
+    "help": "Türkiye küpe ön kodu. TR ile başlar, ardından 12 rakam.",
+    "validation": {
+      "custom": "kupe_tr"
+    }
+  },
+  "q_1_1_5": {
+    "type": "province_select",
+    "placeholder": "İl seçin",
+    "help": "Bulunduğunuz il"
+  },
+  "q_1_1_6": {
+    "type": "district_select",
+    "depends_on": "q_1_1_5",
+    "placeholder": "Önce il seçin",
+    "help": "İl seçtikten sonra ilçeler gelir"
+  },
+  "q_1_1_7": {
+    "type": "gps",
+    "placeholder": "37.5762, 32.5421",
+    "help": "Enlem, Boylam. Google Maps'ten kopyalayabilirsiniz.",
+    "validation": {
+      "custom": "gps_tr"
+    }
+  },
+  "q_1_1_8": {
+    "type": "year",
+    "min": 1900,
+    "max": 2030,
+    "placeholder": "YYYY (örn: 1985)",
+    "validation": {
+      "min": 1900,
+      "max": 2030
+    },
+    "integer": true,
+    "step": 1
+  },
+  "q_1_1_9": {
+    "type": "year",
+    "min": 1900,
+    "max": 2030,
+    "placeholder": "YYYY",
+    "validation": {
+      "min": 1900,
+      "max": 2030
+    },
+    "step": 1,
+    "integer": true
+  },
+  "q_1_1_11": {
+    "type": "phone",
+    "placeholder": "05XX XXX XX XX",
+    "validation": {
+      "custom": "phone_tr"
+    }
+  },
+  "q_1_1_12": {
+    "type": "email",
+    "placeholder": "ornek@firma.com",
+    "validation": {
+      "custom": "email"
+    }
+  },
+  "q_1_1_13": {
+    "type": "number",
+    "min": 1,
+    "max": 100,
+    "unit": "kişi",
+    "integer": true,
+    "step": 1
+  },
+  "q_1_1_14": {
+    "type": "radio",
+    "options": [
+      "1. Kuşak (Kurucu)",
+      "2. Kuşak",
+      "3. Kuşak",
+      "4+ Kuşak",
+      "Profesyonel Yönetim"
+    ]
+  },
+  "q_1_1_15": {
+    "type": "checkbox",
+    "options": [
+      "ISO 9001",
+      "ISO 22000 / HACCP",
+      "Organik Tarım",
+      "İyi Tarım Uygulamaları (İTU)",
+      "Helal Sertifikası",
+      "GLOBALG.A.P.",
+      "Halal",
+      "Diğer",
+      "Yok"
+    ]
+  },
+  "q_1_1_16": {
+    "type": "radio",
+    "options": [
+      "Evet, düzenli",
+      "Evet, ara sıra",
+      "Hayır",
+      "Bilmiyorum"
+    ]
+  },
+  "q_1_1_17": {
+    "type": "radio",
+    "options": [
+      "Sadece web sitesi",
+      "Sadece sosyal medya",
+      "Her ikisi var",
+      "Hiçbiri yok"
+    ]
+  },
+  "q_1_1_18": {
+    "type": "radio",
+    "options": [
+      "0 – 500.000 ₺",
+      "500.000 – 1.500.000 ₺",
+      "1.500.000 – 5.000.000 ₺",
+      "5.000.000 – 15.000.000 ₺",
+      "15.000.000 – 50.000.000 ₺",
+      "50.000.000 ₺+",
+      "Söylemek istemiyorum"
+    ]
+  },
+  "q_2_2_1": {
+    "type": "number",
+    "min": 1,
+    "unit": "m² veya dönüm"
+  },
+  "q_2_2_2": {
+    "type": "radio",
+    "options": [
+      "Tamamı kendi malım",
+      "Tamamı kira",
+      "Karma (bir kısmı kira)",
+      "Aile mülkü",
+      "Hazine arazisi"
+    ]
+  },
+  "q_2_2_3": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_4": {
+    "type": "number",
+    "min": 0,
+    "unit": "dönüm"
+  },
+  "q_2_2_5": {
+    "type": "radio",
+    "options": [
+      "Evet, yıl boyu yeterli",
+      "Evet, ama yaz aylarında kısıtlı",
+      "Kısmen",
+      "Hayır"
+    ]
+  },
+  "q_2_2_6": {
+    "type": "checkbox",
+    "options": [
+      "Şebeke suyu",
+      "Kuyu suyu",
+      "Yer altı sondaj",
+      "Yağmur suyu toplama",
+      "Dere/Nehir",
+      "Sulama kanalı",
+      "DSİ",
+      "Diğer"
+    ]
+  },
+  "q_2_2_7": {
+    "type": "radio",
+    "options": [
+      "Serbest dolaşımlı (free-stall)",
+      "Bağlı sistem (tie-stall)",
+      "Karma",
+      "Açık padok (Open lot)",
+      "Mera (Pastoral)"
+    ]
+  },
+  "q_2_2_8": {
+    "type": "number",
+    "min": 1,
+    "unit": "m²",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_9": {
+    "type": "number",
+    "min": 1,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_10": {
+    "type": "year",
+    "min": 1950,
+    "max": 2030,
+    "placeholder": "YYYY",
+    "integer": true,
+    "step": 1,
+    "validation": {
+      "min": 1950,
+      "max": 2030
+    }
+  },
+  "q_2_2_11": {
+    "type": "year_or_none",
+    "min": 1950,
+    "max": 2030,
+    "placeholder": "YYYY veya 'Yok'",
+    "help": "Yıl girin veya 'Yok' yazın"
+  },
+  "q_2_2_12": {
+    "type": "radio",
+    "options": [
+      "Fan ve duş sistemi",
+      "Sadece fan",
+      "Sadece duş/sprey",
+      "Doğal havalandırma",
+      "Yok"
+    ]
+  },
+  "q_2_2_13": {
+    "type": "radio",
+    "options": [
+      "LED",
+      "Floresan",
+      "Halojen",
+      "Doğal ışık + yapay karma",
+      "Sadece doğal ışık"
+    ]
+  },
+  "q_2_2_14": {
+    "type": "number",
+    "min": 0,
+    "max": 24,
+    "unit": "saat"
+  },
+  "q_2_2_15": {
+    "type": "radio",
+    "options": [
+      "Doğal (yan açık + çatı)",
+      "Mekanik (fanlı)",
+      "Karma",
+      "Yetersiz"
+    ]
+  },
+  "q_2_2_16": {
+    "type": "checkbox",
+    "options": [
+      "Sap/saman",
+      "Kum",
+      "Talaş",
+      "Lastik mat",
+      "Vakumlu yatak (waterbed)",
+      "Gübre kompostu",
+      "Hiçbiri"
+    ]
+  },
+  "q_2_2_17": {
+    "type": "radio",
+    "options": [
+      "Balık sırtı (herringbone)",
+      "Paralel (parallel)",
+      "Tandem",
+      "Karusel (rotary)",
+      "Robotik (AMS)",
+      "Sabit boru sistemi",
+      "Seyyar kova"
+    ]
+  },
+  "q_2_2_18": {
+    "type": "number",
+    "min": 0,
+    "unit": "duraklı",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_19": {
+    "type": "number",
+    "min": 0,
+    "unit": "L",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_20": {
+    "type": "radio",
+    "options": [
+      "Açık tip (DX)",
+      "Kapalı tip (IBT - Ice Bank)",
+      "Doğrudan genleşmeli",
+      "Ön soğutucu + tank"
+    ]
+  },
+  "q_2_2_21": {
+    "type": "radio",
+    "options": [
+      "Evet, yatay",
+      "Evet, dikey",
+      "Hayır",
+      "Planlıyorum"
+    ],
+    "help": "TMR = Toplam Karışık Rasyon. Kaba yem ile kesif yemi karıştırıp tek bir karışım olarak veren mikser makinesi (römorklu veya sabit)."
+  },
+  "q_2_2_22": {
+    "type": "number",
+    "min": 0,
+    "unit": "m³",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_23": {
+    "type": "radio",
+    "options": [
+      "Evet, beton silo",
+      "Evet, toprak silo",
+      "Evet, yığın silaj",
+      "Balya silaj",
+      "Hayır"
+    ]
+  },
+  "q_2_2_24": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_25": {
+    "type": "radio",
+    "options": [
+      "Sadece şebeke",
+      "Şebeke + jeneratör yedek",
+      "Şebeke + güneş enerjisi",
+      "Şebeke + güneş + jeneratör",
+      "Sadece jeneratör"
+    ]
+  },
+  "q_2_2_26": {
+    "type": "number",
+    "min": 0,
+    "unit": "kWh/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_2_2_27": {
+    "type": "radio",
+    "options": [
+      "Güneş enerjisi (GES)",
+      "Biyogaz",
+      "Rüzgar",
+      "Karma",
+      "Yok ama planım var",
+      "Yok"
+    ]
+  },
+  "q_2_2_28": {
+    "type": "radio",
+    "options": [
+      "Sıvı gübre lagünü",
+      "Katı gübre yığını",
+      "Kompost",
+      "Biyogaz tesisi",
+      "Hemen tarlaya uygulama",
+      "Yetersiz / dağınık"
+    ]
+  },
+  "q_3_3_1": {
+    "type": "number",
+    "min": 1,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_2": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_3": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_4": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_5": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_6": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_7": {
+    "type": "radio",
+    "options": [
+      "Holstein (Siyah Alaca)",
+      "Simental",
+      "Montofon (Brown Swiss)",
+      "Jersey",
+      "Yerli Kara",
+      "Yerli Güney Anadolu Kırmızısı",
+      "Karma sürü"
+    ]
+  },
+  "q_3_3_8": {
+    "type": "text",
+    "placeholder": "Örn: %85 Holstein, %15 Simental",
+    "help": "Tüm ırklar ve yüzdelerini virgülle yazın"
+  },
+  "q_3_3_9": {
+    "type": "number",
+    "min": 1,
+    "max": 10,
+    "step": 0.1,
+    "help": "Laktasyon numarası = ineğin kaçıncı sağım/doğum dönemi. Sürünüzün ortalamasını girin (ör. 2,5)."
+  },
+  "q_3_3_10": {
+    "type": "number",
+    "min": 1,
+    "max": 15,
+    "step": 0.1,
+    "unit": "yıl"
+  },
+  "q_3_3_11": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1
+  },
+  "q_3_3_12": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_13": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_14": {
+    "type": "radio",
+    "options": [
+      "Kendi yetiştiriyorum",
+      "Satın alıyorum",
+      "Karma (kendi + alım)",
+      "Komşu çiftlikten",
+      "İthal"
+    ]
+  },
+  "q_3_3_15": {
+    "type": "radio",
+    "options": [
+      "Evet, soyağacı dahil tam",
+      "Evet, sadece ID",
+      "Yazılım kullanıyorum",
+      "Kağıt üzerinde",
+      "Yok"
+    ]
+  },
+  "q_3_3_16": {
+    "type": "checkbox",
+    "options": [
+      "Süt verimi",
+      "SHS / Meme sağlığı",
+      "Vücut yapısı / Conformasyon",
+      "Verim ömrü (longevity)",
+      "Döl tutma",
+      "Genomik test sonucu",
+      "Fiyat",
+      "Rastgele"
+    ]
+  },
+  "q_3_3_17": {
+    "type": "checkbox",
+    "options": [
+      "Plastik küpe",
+      "Metal küpe",
+      "Elektronik küpe (RFID)",
+      "Bolus (kapsül)",
+      "Boyun bandı",
+      "Bacak bandı",
+      "Tetkik dövme"
+    ]
+  },
+  "q_3_3_18": {
+    "type": "checkbox",
+    "options": [
+      "Sağmal grup",
+      "Kuru grup",
+      "Geçiş dönemi (transition)",
+      "Düve grubu",
+      "Buzağı grubu",
+      "Erken laktasyon",
+      "Geç laktasyon",
+      "Hayır, hepsi karma"
+    ]
+  },
+  "q_3_3_19": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_3_3_20": {
+    "type": "radio",
+    "options": [
+      "Günlük",
+      "Haftalık",
+      "Aylık",
+      "Olay bazlı",
+      "Yılda 1-2",
+      "Düzensiz"
+    ]
+  },
+  "q_4_4_1": {
+    "type": "radio",
+    "options": [
+      "Haftalık",
+      "İki haftada bir",
+      "Aylık",
+      "Sadece sorun olunca",
+      "Hiç"
+    ]
+  },
+  "q_4_4_2": {
+    "type": "radio",
+    "options": [
+      "Evet, tam program",
+      "Kısmen",
+      "Hayır"
+    ]
+  },
+  "q_4_4_3": {
+    "type": "checkbox",
+    "options": [
+      "Şap (FMD)",
+      "Brusella (B19/RB51)",
+      "IBR",
+      "BVD",
+      "Şarbon",
+      "Pasterella",
+      "Clostridium",
+      "Mastitis aşısı",
+      "Diğer"
+    ]
+  },
+  "q_4_4_4": {
+    "type": "number",
+    "min": 0,
+    "unit": "vaka/yıl",
+    "integer": true,
+    "step": 1,
+    "help": "Mastitis = meme iltihabı. Klinik vaka = gözle görülür belirti (şişlik, kızarıklık, pıhtılı süt). Yıllık toplam vaka sayısı."
+  },
+  "q_4_4_5": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1,
+    "help": "Belirti vermeyen gizli meme iltihabı. Süt testinde somatik hücre 200.000/ml üstü çıkan ineklerin yüzdesi. Bilmiyorsanız tahmini girin."
+  },
+  "q_4_4_6": {
+    "type": "number",
+    "min": 1,
+    "max": 5,
+    "step": 0.1,
+    "help": "Topallık skoru: ayak/yürüyüş sağlığı 1-5 puanlama (1 = normal, 5 = ağır topal). Sürü ortalaması."
+  },
+  "q_4_4_7": {
+    "type": "radio",
+    "options": [
+      "Yılda 1 kez",
+      "Yılda 2 kez",
+      "Yılda 3-4 kez",
+      "İhtiyaca göre",
+      "Hiç"
+    ]
+  },
+  "q_4_4_8": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "step": 0.1,
+    "unit": "%"
+  },
+  "q_4_4_9": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "step": 0.1,
+    "unit": "%"
+  },
+  "q_4_4_10": {
+    "type": "radio",
+    "options": [
+      "Suni Tohumlama (SI)",
+      "Boğa altı (doğal)",
+      "Karma (SI + boğa)",
+      "Embriyo transferi (ET)",
+      "Cinsiyete göre tohumlama (sexed semen)"
+    ],
+    "help": "Suni tohumlama (dondurulmuş sperma ile) mi, boğa ile doğal aşım mı kullanıyorsunuz?"
+  },
+  "q_4_4_11": {
+    "type": "number",
+    "min": 18,
+    "max": 48,
+    "unit": "ay",
+    "integer": true,
+    "step": 1
+  },
+  "q_4_4_12": {
+    "type": "number",
+    "min": 300,
+    "max": 600,
+    "unit": "gün",
+    "integer": true,
+    "step": 1
+  },
+  "q_4_4_13": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1,
+    "help": "İlk denemede gebe kalan ineklerin yüzdesi (gebelik/conception oranı). Bilmiyorsanız tahmini girin."
+  },
+  "q_4_4_14": {
+    "type": "checkbox",
+    "options": [
+      "Görsel gözlem",
+      "Pedometre / aktivite sensörü",
+      "Boya/tebeşir markası",
+      "Boğa kullanımı",
+      "Hormonal protokol (Ovsynch vb.)",
+      "Karma"
+    ]
+  },
+  "q_4_4_15": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_4_4_16": {
+    "type": "ranked_text",
+    "count": 3,
+    "labels": [
+      "1. En sık sorun",
+      "2. En sık sorun",
+      "3. En sık sorun"
+    ],
+    "placeholder": "Örn: Mastitis",
+    "help": ""
+  },
+  "q_4_4_17": {
+    "type": "radio",
+    "options": [
+      "Hemen hemen hiç",
+      "Ara sıra (ayda 1-2)",
+      "Düzenli (haftalık)",
+      "Sık (sürekli)"
+    ]
+  },
+  "q_4_4_18": {
+    "type": "radio",
+    "options": [
+      "İlacın etiketine göre",
+      "Standart 3-5 gün",
+      "Standart 7 gün",
+      "Veteriner kararı",
+      "Bilmiyorum"
+    ]
+  },
+  "q_4_4_19": {
+    "type": "radio",
+    "options": [
+      "İlk 2 saatte 4L ağız sütü",
+      "İlk 6 saatte ağız sütü",
+      "Annesinden serbest emzirme",
+      "Kontrolsüz / değişken"
+    ],
+    "help": "Kolostrum = doğumdan sonraki ilk ağız sütü; buzağının bağışıklığı için kritik. Buzağıya ne kadar sürede ve ne kadar verdiğinizi yazın."
+  },
+  "q_4_4_20": {
+    "type": "radio",
+    "options": [
+      "Düzenli kayıt + kontrol",
+      "Bazen kontrol",
+      "Sadece sorun olunca",
+      "Hayır"
+    ]
+  },
+  "q_4_4_21": {
+    "type": "radio",
+    "options": [
+      "Düzenli (haftalık)",
+      "Aylık",
+      "Veteriner ziyaretinde",
+      "Hayır"
+    ],
+    "help": "BCS = Vücut Kondisyon Skoru: ineğin zayıf/şişman durumunu 1-5 arası puanlama. Düzenli takip ediyor musunuz?"
+  },
+  "q_4_4_22": {
+    "type": "radio",
+    "options": [
+      "Evet, her yıl",
+      "İki yılda bir",
+      "Sadece şüpheli vakada",
+      "Hayır"
+    ]
+  },
+  "q_4_4_23": {
+    "type": "radio",
+    "options": [
+      "Bilgisayar yazılımı",
+      "Mobil uygulama",
+      "Kağıt defter",
+      "Veteriner tutuyor",
+      "Tutulmuyor"
+    ]
+  },
+  "q_4_4_24": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_5_5_1": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_5_5_2": {
+    "type": "number",
+    "min": 0,
+    "max": 80,
+    "unit": "kg/gün",
+    "step": 0.1
+  },
+  "q_5_5_3": {
+    "type": "number",
+    "min": 0,
+    "unit": "kg",
+    "integer": true,
+    "step": 1
+  },
+  "q_5_5_4": {
+    "type": "number",
+    "min": 0,
+    "max": 200,
+    "unit": "gün (DIM)",
+    "integer": true,
+    "step": 1,
+    "help": "Doğumdan sonra sütün en yüksek olduğu gün (genelde 45-70. günler arası)."
+  },
+  "q_5_5_5": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "kg",
+    "integer": true,
+    "step": 1
+  },
+  "q_5_5_6": {
+    "type": "number",
+    "min": 0,
+    "max": 10,
+    "step": 0.01,
+    "unit": "%"
+  },
+  "q_5_5_7": {
+    "type": "number",
+    "min": 0,
+    "max": 10,
+    "step": 0.01,
+    "unit": "%"
+  },
+  "q_5_5_8": {
+    "type": "number",
+    "min": 0,
+    "max": 10,
+    "step": 0.01,
+    "unit": "%"
+  },
+  "q_5_5_9": {
+    "type": "number",
+    "min": 0,
+    "unit": "hücre/mL",
+    "integer": true,
+    "step": 1,
+    "help": "SHS = Somatik Hücre Sayısı (hücre/ml): meme sağlığı ve süt kalitesi göstergesi. Süt alıcınızın raporunda yazar; düşük = iyi."
+  },
+  "q_5_5_10": {
+    "type": "number",
+    "min": 0,
+    "unit": "CFU/mL",
+    "integer": true,
+    "step": 1,
+    "help": "TBS = Toplam Bakteri Sayısı (cfu/ml): süt hijyeni göstergesi. Süt alıcısının analiz raporunda bulunur."
+  },
+  "q_5_5_11": {
+    "type": "radio",
+    "options": [
+      "Evet, düzenli",
+      "Ara sıra",
+      "Hayır",
+      "Nedir bilmiyorum"
+    ]
+  },
+  "q_5_5_12": {
+    "type": "radio",
+    "options": [
+      "<2 saatte 4°C altı",
+      "2-4 saatte",
+      "4-6 saatte",
+      "Ölçmüyorum"
+    ]
+  },
+  "q_5_5_13": {
+    "type": "radio",
+    "options": [
+      "Günlük",
+      "Günaşırı",
+      "Haftada 3-4",
+      "Haftalık",
+      "Düzensiz"
+    ]
+  },
+  "q_5_5_14": {
+    "type": "radio",
+    "options": [
+      "Alıcının tankeriyle",
+      "Kendi taşımam",
+      "Soğutmalı süt nakil aracı",
+      "Sütçü pikabı"
+    ]
+  },
+  "q_5_5_15": {
+    "type": "number",
+    "min": 0,
+    "step": 0.01,
+    "unit": "₺/kg"
+  },
+  "q_5_5_16": {
+    "type": "radio",
+    "options": [
+      "Evet, düzenli prim alıyorum",
+      "Bazen",
+      "Hayır",
+      "Bilmiyorum"
+    ]
+  },
+  "q_5_5_17": {
+    "type": "radio",
+    "options": [
+      "Alıcı firma laboratuvarı",
+      "Bağımsız özel laboratuvar",
+      "Üniversite / kamu",
+      "Hayvancılık il müdürlüğü",
+      "Hiç yapılmıyor"
+    ]
+  },
+  "q_5_5_18": {
+    "type": "radio",
+    "options": [
+      "Her sağımda (inline)",
+      "Haftalık",
+      "İki haftada bir",
+      "Aylık",
+      "Yapılmıyor"
+    ]
+  },
+  "q_6_6_1": {
+    "type": "radio",
+    "options": [
+      "TMR (Tam Karma Rasyon)",
+      "Yarı-TMR (PMR)",
+      "Komponent (ayrı ayrı)",
+      "Mera + kesif",
+      "Sadece mera"
+    ]
+  },
+  "q_6_6_2": {
+    "type": "number",
+    "min": 0,
+    "unit": "kg/inek/gün",
+    "step": 0.1,
+    "max": 100,
+    "help": "Bir ineğe günde verilen toplam karışık yem (kg). Bilmiyorsanız sürü ortalamasını tahmini girin."
+  },
+  "q_6_6_3": {
+    "type": "radio",
+    "options": [
+      "%100 kendi üretiyorum",
+      "%75 kendim, %25 alım",
+      "%50/%50 karma",
+      "Çoğunlukla alıyorum",
+      "Tamamı satın alma"
+    ]
+  },
+  "q_6_6_4": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_5": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_6": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_7": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_8": {
+    "type": "number",
+    "min": 0,
+    "unit": "kg KM",
+    "step": 0.1,
+    "help": "Kaba yem = silaj, kuru ot, yonca gibi lifli yemler. İnek başına günlük kg."
+  },
+  "q_6_6_9": {
+    "type": "number",
+    "min": 0,
+    "unit": "kg/gün",
+    "step": 0.1,
+    "help": "Kesif/konsantre yem = fabrika yemi veya tahıl karışımı (yüksek enerjili). İnek başına günlük kg."
+  },
+  "q_6_6_10": {
+    "type": "number",
+    "min": 0,
+    "unit": "ton/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_11": {
+    "type": "radio",
+    "options": [
+      "Yerel yem fabrikası",
+      "Büyük markalı (Çamlı, Banvit vb.)",
+      "Birlikten",
+      "Toptancıdan",
+      "Kendi karışımım"
+    ]
+  },
+  "q_6_6_12": {
+    "type": "radio",
+    "options": [
+      "Standart yem firmasının paketi",
+      "Veteriner tavsiyesi özel",
+      "Premiks + kendim karıştırıyorum",
+      "Az / hiç"
+    ]
+  },
+  "q_6_6_13": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/ay",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_14": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1
+  },
+  "q_6_6_15": {
+    "type": "radio",
+    "options": [
+      "Yem firması hesaplıyor",
+      "Veteriner / zooteknik müh.",
+      "Kendim (tecrübeyle)",
+      "NRC / yazılım",
+      "Hesaplanmıyor"
+    ],
+    "help": "Rasyon = günlük yem karışımının içeriği/dengesi. Nasıl belirliyorsunuz: veteriner/danışman, yazılım, yoksa tecrübe ile mi?"
+  },
+  "q_6_6_16": {
+    "type": "radio",
+    "options": [
+      "Haftalık",
+      "Aylık",
+      "Mevsimlik",
+      "Yıllık",
+      "Hiç güncellenmiyor"
+    ]
+  },
+  "q_6_6_17": {
+    "type": "radio",
+    "options": [
+      "Evet, su sayacıyla",
+      "Tahmini",
+      "Hayır"
+    ]
+  },
+  "q_6_6_18": {
+    "type": "number",
+    "min": 0,
+    "max": 300,
+    "unit": "L/gün",
+    "step": 1
+  },
+  "q_6_6_19": {
+    "type": "number",
+    "min": 0,
+    "max": 24,
+    "unit": "ay stok",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_20": {
+    "type": "radio",
+    "options": [
+      "Düzenli (her parti)",
+      "Mevsimde 1-2",
+      "Sadece sorun olunca",
+      "Hiç"
+    ],
+    "help": "Silaj/yonca gibi yemlerin besin değerini (protein, enerji, nem) laboratuvarda ölçtürmek."
+  },
+  "q_6_6_21": {
+    "type": "radio",
+    "options": [
+      "Ana sütü serbest",
+      "Ana sütü ölçülü",
+      "Süt ikamesi (powder)",
+      "Karma"
+    ],
+    "help": "Süt ikamesi = buzağıya ana sütü yerine verilen toz süt mama. Buzağıyı nasıl besliyorsunuz?"
+  },
+  "q_6_6_22": {
+    "type": "number",
+    "min": 30,
+    "max": 180,
+    "unit": "gün",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_23": {
+    "type": "radio",
+    "options": [
+      "Özel düve rasyonu",
+      "Sağmal rasyonun azaltılmışı",
+      "Mera ağırlıklı",
+      "Plan yok"
+    ],
+    "help": "Düve = henüz doğurmamış genç dişi sığır. Onlara özel bir büyütme yem programınız var mı?"
+  },
+  "q_6_6_24": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_6_6_25": {
+    "type": "radio",
+    "options": [
+      "Evet, yaz rasyonu değişiyor",
+      "Sadece su artırma",
+      "Kısmen",
+      "Hayır"
+    ]
+  },
+  "q_6_6_26": {
+    "type": "radio",
+    "options": [
+      "Evet, tartı ile",
+      "Görsel takip",
+      "Hayır"
+    ]
+  },
+  "q_6_6_27": {
+    "type": "radio",
+    "options": [
+      "Evet, full otomatik",
+      "Yarı otomatik (mikser)",
+      "Manuel"
+    ]
+  },
+  "q_6_6_28": {
+    "type": "radio",
+    "options": [
+      "Evet, sensörle",
+      "Görsel",
+      "Hayır"
+    ],
+    "help": "Karışık yemin bozulup bozulmadığını pH veya sıcaklık ile takip etmek (bozulan yemi inekler reddeder)."
+  },
+  "q_7_7_1": {
+    "type": "radio",
+    "options": [
+      "2 kez (sabah + akşam)",
+      "3 kez",
+      "Robot — sürekli",
+      "1 kez"
+    ]
+  },
+  "q_7_7_2": {
+    "type": "number",
+    "min": 0,
+    "max": 10,
+    "step": 0.1,
+    "unit": "saat/sağım"
+  },
+  "q_7_7_3": {
+    "type": "number",
+    "min": 0,
+    "max": 10,
+    "step": 0.1,
+    "unit": "kg/dk"
+  },
+  "q_7_7_4": {
+    "type": "number",
+    "min": 30,
+    "max": 60,
+    "step": 0.5,
+    "unit": "kPa"
+  },
+  "q_7_7_5": {
+    "type": "text",
+    "placeholder": "Örn: 60:40"
+  },
+  "q_7_7_6": {
+    "type": "number",
+    "min": 30,
+    "max": 90,
+    "unit": "atış/dk",
+    "integer": true,
+    "step": 1
+  },
+  "q_7_7_7": {
+    "type": "radio",
+    "options": [
+      "Evet, daldırma + silinme",
+      "Sadece silme",
+      "Sadece daldırma",
+      "Yapılmıyor"
+    ]
+  },
+  "q_7_7_8": {
+    "type": "radio",
+    "options": [
+      "Evet, her sağım sonrası",
+      "Sadece sabah",
+      "Bazen",
+      "Hayır"
+    ]
+  },
+  "q_7_7_9": {
+    "type": "radio",
+    "options": [
+      "Evet, her sağımda",
+      "Ara sıra",
+      "Hayır"
+    ]
+  },
+  "q_7_7_10": {
+    "type": "radio",
+    "options": [
+      "Haftalık",
+      "Aylık",
+      "Şüpheli vakada",
+      "Hiç"
+    ],
+    "help": "CMT = California Mastitis Test: ahırda yapılan hızlı gizli mastitis testi (süt + reaktif karıştırılıp koyulaşmaya bakılır)."
+  },
+  "q_7_7_11": {
+    "type": "radio",
+    "options": [
+      "Evet, otomatik CIP",
+      "Manuel temizlik",
+      "Yetersiz"
+    ]
+  },
+  "q_7_7_12": {
+    "type": "radio",
+    "options": [
+      "Evet, tüm duraklarda",
+      "Bazı duraklarda",
+      "Hayır"
+    ],
+    "help": "Auto-takeoff = sağım bitince sağım başlığını otomatik düşüren sistem (otomatik kapanma)."
+  },
+  "q_7_7_13": {
+    "type": "radio",
+    "options": [
+      "Evet, tümünde",
+      "Bazılarında",
+      "Hayır"
+    ]
+  },
+  "q_7_7_14": {
+    "type": "radio",
+    "options": [
+      "Evet, sensörle",
+      "Manuel ölçüm",
+      "Hayır"
+    ]
+  },
+  "q_7_7_15": {
+    "type": "radio",
+    "options": [
+      "Evet, eğitimli",
+      "Tecrübeli ama sertifikasız",
+      "Sertifikasız, az tecrübe"
+    ]
+  },
+  "q_8_8_1": {
+    "type": "number",
+    "min": 0,
+    "unit": "kişi",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_2": {
+    "type": "number",
+    "min": 0,
+    "unit": "kişi",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_3": {
+    "type": "number",
+    "min": 0,
+    "unit": "kişi",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_4": {
+    "type": "number",
+    "min": 0,
+    "unit": "kişi",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_5": {
+    "type": "number",
+    "min": 0,
+    "unit": "kişi",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_6": {
+    "type": "number",
+    "min": 0,
+    "unit": "kişi",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_7": {
+    "type": "radio",
+    "options": [
+      "Tam zamanlı kadrolu",
+      "Yarı zamanlı",
+      "Anlaşmalı dış veteriner",
+      "Talep üzerine",
+      "Yok"
+    ]
+  },
+  "q_8_8_8": {
+    "type": "radio",
+    "options": [
+      "Tam zamanlı",
+      "Danışman",
+      "Yok"
+    ]
+  },
+  "q_8_8_9": {
+    "type": "radio",
+    "options": [
+      "Profesyonel müdür",
+      "Sahibi yönetiyor",
+      "Aile ferdi",
+      "Yok"
+    ]
+  },
+  "q_8_8_10": {
+    "type": "radio",
+    "options": [
+      "İçeride mali müşavir",
+      "Dış mali müşavir",
+      "Sahibi tutuyor",
+      "Yok"
+    ]
+  },
+  "q_8_8_11": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/ay",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_12": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/ay (SGK dahil)",
+    "integer": true,
+    "step": 1
+  },
+  "q_8_8_13": {
+    "type": "radio",
+    "options": [
+      "İlkokul",
+      "Ortaokul",
+      "Lise",
+      "Meslek lisesi (tarım)",
+      "Üniversite (ziraat)",
+      "Karma"
+    ]
+  },
+  "q_8_8_14": {
+    "type": "radio",
+    "options": [
+      "Düzenli eğitim",
+      "Yılda bir-iki",
+      "Sadece yeni teknoloji geldiğinde",
+      "Yok"
+    ]
+  },
+  "q_8_8_15": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1
+  },
+  "q_9_9_1": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_2": {
+    "type": "number",
+    "unit": "₺",
+    "allow_negative": true,
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_3": {
+    "type": "number",
+    "unit": "₺",
+    "allow_negative": true,
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_4": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_5": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_6": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1
+  },
+  "q_9_9_7": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_8": {
+    "type": "checkbox",
+    "options": [
+      "Ziraat Bankası tarımsal kredi",
+      "Halkbank tarım kredisi",
+      "Tarım Kredi Kooperatifi",
+      "Özel banka ticari",
+      "Leasing",
+      "Üretici / tedarikçi vadeli",
+      "Aile / şahıs",
+      "Yok"
+    ]
+  },
+  "q_9_9_9": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "step": 0.1,
+    "unit": "%"
+  },
+  "q_9_9_10": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/ay",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_11": {
+    "type": "radio",
+    "options": [
+      "Evet, tüm sürü",
+      "Evet, kısmen",
+      "Hayır, bilgim yok",
+      "Hayır, gereksiz buluyorum"
+    ]
+  },
+  "q_9_9_12": {
+    "type": "radio",
+    "options": [
+      "Evet, kapsamlı",
+      "Sadece yangın/deprem",
+      "Hayır"
+    ]
+  },
+  "q_9_9_13": {
+    "type": "checkbox",
+    "options": [
+      "Süt prim desteği",
+      "Yem bitkisi desteği",
+      "Hayvan başı sübvansiyon",
+      "Damızlık desteği",
+      "TKDK / IPARD hibe",
+      "TARSİM prim desteği",
+      "Kırsal kalkınma",
+      "Hayır, hiç"
+    ]
+  },
+  "q_9_9_14": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_15": {
+    "type": "radio",
+    "options": [
+      "Profesyonel muhasebe yazılımı",
+      "Excel / tablolar",
+      "Defter / kağıt",
+      "Mali müşavir tutuyor",
+      "Yok"
+    ]
+  },
+  "q_9_9_16": {
+    "type": "radio",
+    "options": [
+      "Evet, KDV mükellefiyim",
+      "Hayır, basit usul",
+      "Hayır, gerçek usul gelir",
+      "Hayır, vergiden muafım"
+    ]
+  },
+  "q_9_9_17": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1
+  },
+  "q_9_9_18": {
+    "type": "radio",
+    "options": [
+      "Her ay pozitif",
+      "Çoğu ay pozitif",
+      "Dalgalı (yarı yarıya)",
+      "Çoğu ay negatif",
+      "Sürekli sıkıntı"
+    ]
+  },
+  "q_9_9_19": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_20": {
+    "type": "number",
+    "min": -100,
+    "max": 1000,
+    "step": 0.1,
+    "unit": "% yıllık",
+    "allow_negative": true
+  },
+  "q_9_9_21": {
+    "type": "ranked_text",
+    "count": 3,
+    "labels": [
+      "1. Gider kalemi",
+      "2. Gider kalemi",
+      "3. Gider kalemi"
+    ],
+    "placeholder": "Örn: Yem",
+    "help": ""
+  },
+  "q_9_9_22": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_23": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_9_9_24": {
+    "type": "radio",
+    "options": [
+      "3+ ay gideri karşılar",
+      "1-3 ay gideri karşılar",
+      "1 aydan az",
+      "Yok"
+    ]
+  },
+  "q_9_9_25": {
+    "type": "radio",
+    "options": [
+      "Evet, sürekli",
+      "Sadece beyanname dönemleri",
+      "Hayır"
+    ]
+  },
+  "q_10_10_1": {
+    "type": "radio",
+    "options": [
+      "Ulusal süt firması (Pınar/Sütaş/vb.)",
+      "Bölgesel mandıra",
+      "Süt birliği / kooperatif",
+      "Yerel peynirci",
+      "Doğrudan tüketici",
+      "Karma"
+    ]
+  },
+  "q_10_10_2": {
+    "type": "radio",
+    "options": [
+      "Yazılı yıllık sözleşme",
+      "Sözlü anlaşma",
+      "Aylık güncellenen",
+      "Sözleşme yok"
+    ]
+  },
+  "q_10_10_3": {
+    "type": "radio",
+    "options": [
+      "1 yıldan az",
+      "1 yıl",
+      "2-3 yıl",
+      "3+ yıl",
+      "Belirsiz"
+    ]
+  },
+  "q_10_10_4": {
+    "type": "radio",
+    "options": [
+      "Evet, CPI'a endeksli",
+      "Evet, başka formüle endeksli",
+      "Hayır, sabit",
+      "Bilmiyorum"
+    ]
+  },
+  "q_10_10_5": {
+    "type": "month_year",
+    "placeholder": "AA/YYYY",
+    "help": "Ay ve yıl seçin"
+  },
+  "q_10_10_6": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_10_10_7": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_10_10_8": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_10_10_9": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/baş (canlı)",
+    "integer": true,
+    "step": 1
+  },
+  "q_10_10_10": {
+    "type": "radio",
+    "options": [
+      "Evet, gebe düve satıyorum",
+      "Evet, kuru düve",
+      "Hayır",
+      "Planlıyorum"
+    ]
+  },
+  "q_10_10_11": {
+    "type": "radio",
+    "options": [
+      "Evet, düzenli",
+      "Ara sıra",
+      "Hayır",
+      "Veriyorum / Bedava"
+    ]
+  },
+  "q_10_10_12": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_10_10_13": {
+    "type": "radio",
+    "options": [
+      "Evet, peynir/yoğurt üretiyorum",
+      "Evet, çiğ süt satışı",
+      "Hayır, sadece toptan"
+    ]
+  },
+  "q_10_10_14": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺/ay",
+    "integer": true,
+    "step": 1
+  },
+  "q_10_10_15": {
+    "type": "number",
+    "min": 0,
+    "unit": "müşteri",
+    "integer": true,
+    "step": 1
+  },
+  "q_10_10_16": {
+    "type": "radio",
+    "options": [
+      "Evet, düzenli",
+      "Ara sıra",
+      "Hayır"
+    ]
+  },
+  "q_11_11_1": {
+    "type": "radio",
+    "options": [
+      "Evet, profesyonel yazılım",
+      "Basit (Excel)",
+      "Mobil uygulama",
+      "Hayır"
+    ],
+    "help": "İnekleri, sütü, sağlık ve tohumlama kayıtlarını bilgisayar/telefonda takip eden program (ör. DeLaval, Lely, AfiMilk)."
+  },
+  "q_11_11_2": {
+    "type": "text",
+    "placeholder": "Marka / sürüm (örn: DairyComp 305, Afimilk)"
+  },
+  "q_11_11_3": {
+    "type": "radio",
+    "options": [
+      "Evet, tüm sürüde",
+      "Bazı hayvanlarda",
+      "Hayır"
+    ],
+    "help": "İneğin ayağına/boynuna takılan, hareketinden kızgınlık ve hastalığı tespit eden sensör."
+  },
+  "q_11_11_4": {
+    "type": "radio",
+    "options": [
+      "Evet, tüm sağmalda",
+      "Bazılarında",
+      "Hayır"
+    ]
+  },
+  "q_11_11_5": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Hayır"
+    ]
+  },
+  "q_11_11_6": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Kısmen",
+      "Hayır"
+    ]
+  },
+  "q_11_11_7": {
+    "type": "radio",
+    "options": [
+      "Evet, kendi istasyonum",
+      "Bölge istasyonundan veri alıyorum",
+      "Hayır"
+    ],
+    "help": "THI = Sıcaklık-Nem İndeksi; ineklerde ısı stresini ölçer. Ahır iklimini izleyen bir istasyonunuz var mı?"
+  },
+  "q_11_11_8": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Sadece CO₂",
+      "Sadece NH₃",
+      "Hayır"
+    ]
+  },
+  "q_11_11_9": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Hayır"
+    ]
+  },
+  "q_11_11_10": {
+    "type": "radio",
+    "options": [
+      "Fiber / yüksek hızlı",
+      "ADSL / orta hız",
+      "Sadece mobil 4G/5G",
+      "Çok zayıf",
+      "Yok"
+    ]
+  },
+  "q_11_11_11": {
+    "type": "radio",
+    "options": [
+      "Düzenli kullanım",
+      "Bazen",
+      "Hayır"
+    ]
+  },
+  "q_11_11_12": {
+    "type": "radio",
+    "options": [
+      "Evet, çok sayıda + uzaktan erişim",
+      "Bazı bölgelerde",
+      "Yok"
+    ]
+  },
+  "q_11_11_13": {
+    "type": "radio",
+    "options": [
+      "Evet, günlük",
+      "Bazen",
+      "Hayır"
+    ]
+  },
+  "q_11_11_14": {
+    "type": "radio",
+    "options": [
+      "Evet, ekip grubu var",
+      "Bireysel mesajlaşma",
+      "Hayır"
+    ]
+  },
+  "q_11_11_15": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Hayır"
+    ]
+  },
+  "q_11_11_16": {
+    "type": "radio",
+    "options": [
+      "Evet, hepsinde",
+      "Bazılarında",
+      "Hayır"
+    ]
+  },
+  "q_11_11_17": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Hayır"
+    ]
+  },
+  "q_11_11_18": {
+    "type": "radio",
+    "options": [
+      "Düzenli otomatik yedek",
+      "Manuel yedek alıyorum",
+      "Yok"
+    ]
+  },
+  "q_12_12_1": {
+    "type": "radio",
+    "options": [
+      "Evet, sertifikalı",
+      "Hesapladım ama sertifika yok",
+      "Hayır"
+    ]
+  },
+  "q_12_12_2": {
+    "type": "radio",
+    "options": [
+      "Kompost",
+      "Lagün",
+      "Biyogaz",
+      "Yığın depolama",
+      "Direkt tarlaya",
+      "Yetersiz"
+    ]
+  },
+  "q_12_12_3": {
+    "type": "number",
+    "min": 0,
+    "unit": "m³/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_12_12_4": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Hayır"
+    ]
+  },
+  "q_12_12_5": {
+    "type": "number",
+    "min": 0,
+    "unit": "kWh/yıl",
+    "integer": true,
+    "step": 1
+  },
+  "q_12_12_6": {
+    "type": "number",
+    "min": 0,
+    "step": 0.1,
+    "unit": "kWp",
+    "help": "GES = Güneş Enerjisi Santrali. Kurulu gücü kWp (kilowatt-peak) cinsinden girin."
+  },
+  "q_12_12_7": {
+    "type": "number",
+    "min": 0,
+    "max": 100,
+    "unit": "%",
+    "step": 0.1
+  },
+  "q_12_12_8": {
+    "type": "radio",
+    "options": [
+      "Evet, kurulu",
+      "Evet, fizibilite var",
+      "Düşünüyorum",
+      "Hayır"
+    ],
+    "help": "Biyogaz = gübreden metan gazı üretip enerjiye çevirme. Bu seçeneği araştırdınız mı?"
+  },
+  "q_12_12_9": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Kısmen",
+      "Hayır"
+    ]
+  },
+  "q_12_12_10": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_12_12_11": {
+    "type": "radio",
+    "options": [
+      "Yoğun",
+      "Ortalama",
+      "Az",
+      "Organik / sıfır"
+    ]
+  },
+  "q_12_12_12": {
+    "type": "radio",
+    "options": [
+      "Yılda 1+",
+      "İki yılda bir",
+      "Sadece sorun çıkınca",
+      "Hayır"
+    ]
+  },
+  "q_12_12_13": {
+    "type": "radio",
+    "options": [
+      "Evet",
+      "Bilgi alıyorum",
+      "Hayır"
+    ]
+  },
+  "q_12_12_14": {
+    "type": "radio",
+    "options": [
+      "Evet, hazırladım",
+      "İnceledim ama hazırlamadım",
+      "Bilgim yok"
+    ]
+  },
+  "q_13_13_1": {
+    "type": "radio",
+    "options": [
+      "Sürü büyütme",
+      "Verim artırma (mevcut sürüde)",
+      "Otomasyon / dijitalleşme",
+      "Sürdürülebilirlik / karbon",
+      "İşleme / markalaşma",
+      "İhracat",
+      "Sabit kalma"
+    ]
+  },
+  "q_13_13_2": {
+    "type": "number",
+    "min": 0,
+    "unit": "baş",
+    "integer": true,
+    "step": 1
+  },
+  "q_13_13_3": {
+    "type": "number",
+    "min": 0,
+    "unit": "kg/laktasyon",
+    "integer": true,
+    "step": 1,
+    "help": "Bir ineğin bir laktasyon (sağım dönemi, ~305 gün) boyunca hedeflediğiniz toplam süt üretimi (kg)."
+  },
+  "q_13_13_4": {
+    "type": "checkbox",
+    "options": [
+      "Ahır genişletme",
+      "Yeni sağım sistemi",
+      "Süt soğutma / hijyen yatırımı",
+      "Yem mikseri / silo",
+      "Sensör / yazılım",
+      "Güneş enerjisi",
+      "Biyogaz",
+      "Hiçbiri"
+    ]
+  },
+  "q_13_13_5": {
+    "type": "number",
+    "min": 0,
+    "unit": "₺",
+    "integer": true,
+    "step": 1
+  },
+  "q_13_13_6": {
+    "type": "radio",
+    "options": [
+      "Evet, başvurdum / aldım",
+      "Hazırlık aşamasında",
+      "Düşünüyorum",
+      "Hayır"
+    ]
+  },
+  "q_13_13_7": {
+    "type": "ranked_text",
+    "count": 3,
+    "labels": [
+      "1. Endişe / sorun",
+      "2. Endişe / sorun",
+      "3. Endişe / sorun"
+    ],
+    "placeholder": "Örn: İşçi bulamamak",
+    "help": ""
+  },
+  "q_13_13_8": {
+    "type": "checkbox",
+    "options": [
+      "Sürü sağlığı",
+      "Beslenme / rasyon",
+      "Finansal yönetim",
+      "Sensör / yazılım",
+      "İşgücü yönetimi",
+      "Pazarlama",
+      "Sürdürülebilirlik",
+      "Yok"
+    ]
+  },
+  "q_13_13_9": {
+    "type": "radio",
+    "options": [
+      "Evet, çocuklar devam edecek",
+      "Belirsiz",
+      "Hayır, satılacak",
+      "Profesyonel yönetime devredilecek"
+    ]
+  },
+  "q_13_13_10": {
+    "type": "radio",
+    "options": [
+      "Evet, başka tarım faaliyeti",
+      "Diğer iş kolu",
+      "Hayır, sadece çiftlik"
+    ]
+  },
+  "q_13_13_11": {
+    "type": "radio",
+    "options": [
+      "İşleme / direkt satışa geçerim",
+      "Sürüyü küçültürüm",
+      "Maliyet kıs(arak dayanırım)",
+      "Borçlanır beklerim",
+      "Çiftliği satarım",
+      "Planım yok"
+    ]
+  },
+  "q_13_13_12": {
+    "type": "textarea",
+    "placeholder": "Örn: 200 baş sürü, 10.000 kg/inek/laktasyon, %30 brüt marj",
+    "help": "Açık ve sayısal hedef yazın"
+  },
+  "q_14_14_1": {
+    "type": "ranked_text",
+    "count": 3,
+    "labels": [
+      "1. Yaşanan büyük olay",
+      "2. Yaşanan büyük olay",
+      "3. Yaşanan büyük olay"
+    ],
+    "placeholder": "Örn: Şap salgını 2023",
+    "help": ""
+  },
+  "q_14_14_2": {
+    "type": "radio",
+    "options": [
+      "Evet, dokümante",
+      "Sözlü protokol var",
+      "Hayır"
+    ]
+  },
+  "q_14_14_3": {
+    "type": "radio",
+    "options": [
+      "Evet, otomatik devreye giren",
+      "Manuel jeneratör",
+      "Hayır"
+    ]
+  },
+  "q_14_14_4": {
+    "type": "radio",
+    "options": [
+      "Otomatik sprinkler",
+      "Manuel sistem + tüpler",
+      "Sadece tüpler",
+      "Yok"
+    ]
+  },
+  "q_14_14_5": {
+    "type": "radio",
+    "options": [
+      "Evet, dokümante",
+      "Sözlü",
+      "Hayır"
+    ],
+    "help": "Biyogüvenlik = hastalık girişini önleme kuralları: ziyaretçi/araç dezenfeksiyonu, yeni hayvan karantinası, kontrollü giriş."
+  },
+  "q_14_14_6": {
+    "type": "radio",
+    "options": [
+      "Evet, ayrı karantina",
+      "Sürünün uzak köşesi",
+      "Yok"
+    ]
+  },
+  "q_14_14_7": {
+    "type": "number",
+    "min": 0,
+    "step": 0.1,
+    "unit": "km"
+  },
+  "q_14_14_8": {
+    "type": "radio",
+    "options": [
+      "3+ tedarikçi",
+      "2 tedarikçi",
+      "Tek tedarikçi"
+    ]
+  },
+  "q_14_14_9": {
+    "type": "radio",
+    "options": [
+      "3+ alıcı",
+      "2 alıcı",
+      "Tek alıcı"
+    ]
+  },
+  "q_14_14_10": {
+    "type": "textarea",
+    "placeholder": "Operasyonel zorluğunuzu açıkça yazın",
+    "help": ""
+  }
+}

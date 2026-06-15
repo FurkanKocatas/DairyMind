@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Konsept A — İzometrik Çiftlik İnşası</title>
+  <link rel="stylesheet" href="/vendor/tailwind.css?v=20260614d" />
+  <script defer src="/vendor/alpine.min.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    body { font-family: 'Inter', system-ui, sans-serif; }
+    [x-cloak] { display: none !important; }
+
+    .iso-stage {
+      background: linear-gradient(180deg, #bae6fd 0%, #e0f2fe 50%, #ecfccb 100%);
+    }
+
+    /* Building entry animation */
+    .build-enter {
+      animation: buildIn 0.7s cubic-bezier(0.34, 1.56, 0.64, 1) forwards;
+      transform-origin: center bottom;
+    }
+    @keyframes buildIn {
+      0%   { opacity: 0; transform: translateY(-40px) scale(0.3); }
+      60%  { opacity: 1; transform: translateY(0) scale(1.1); }
+      100% { opacity: 1; transform: translateY(0) scale(1); }
+    }
+    .dust {
+      animation: dust 1s ease-out forwards;
+    }
+    @keyframes dust {
+      0%   { opacity: 0.8; transform: scale(0.2); }
+      100% { opacity: 0; transform: scale(2.5); }
+    }
+    .pulse-soft {
+      animation: pulseSoft 2.5s ease-in-out infinite;
+    }
+    @keyframes pulseSoft {
+      0%, 100% { opacity: 0.85; }
+      50%      { opacity: 1; }
+    }
+    .cow-bob {
+      animation: cowBob 3s ease-in-out infinite;
+    }
+    @keyframes cowBob {
+      0%, 100% { transform: translateY(0); }
+      50%      { transform: translateY(-1.5px); }
+    }
+    .smoke {
+      animation: smoke 4s ease-in-out infinite;
+    }
+    @keyframes smoke {
+      0%   { opacity: 0; transform: translateY(0) scale(0.5); }
+      50%  { opacity: 0.6; }
+      100% { opacity: 0; transform: translateY(-25px) scale(1.2); }
+    }
+    .progress-bar {
+      transition: width 0.6s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .glow-emerald { filter: drop-shadow(0 0 8px rgba(16, 185, 129, 0.4)); }
+
+    /* Form ripple feedback */
+    .ripple {
+      position: relative;
+      overflow: hidden;
+    }
+    .ripple::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: radial-gradient(circle at center, rgba(16, 185, 129, 0.3) 0%, transparent 70%);
+      opacity: 0;
+      transform: scale(0);
+      pointer-events: none;
+    }
+    .ripple.flash::after {
+      animation: ripple-flash 0.5s ease-out;
+    }
+    @keyframes ripple-flash {
+      0%   { opacity: 0; transform: scale(0); }
+      50%  { opacity: 1; transform: scale(1.5); }
+      100% { opacity: 0; transform: scale(2); }
+    }
+  </style>
+</head>
+<body class="bg-slate-50 min-h-screen text-slate-800">
+
+<div x-data="builder()" x-init="init()" class="min-h-screen flex flex-col">
+
+  <!-- Header -->
+  <header class="bg-white border-b border-slate-200 px-6 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-500 to-emerald-700 flex items-center justify-center text-white text-xl">🐄</div>
+      <div>
+        <div class="text-[10px] font-bold tracking-wider text-emerald-700 uppercase">DairyMind™ · Konsept A</div>
+        <div class="text-base font-bold text-slate-900">İzometrik Çiftlik İnşası</div>
+      </div>
+    </div>
+    <div class="flex gap-2">
+      <a href="/concept-b" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-md hover:bg-slate-100 transition">Konsept B →</a>
+      <a href="/" class="px-3 py-1.5 text-xs font-semibold text-slate-600 hover:text-slate-900 rounded-md hover:bg-slate-100 transition">Ana sayfa</a>
+    </div>
+  </header>
+
+  <div class="flex-1 grid lg:grid-cols-[360px_1fr] gap-0">
+
+    <!-- Sidebar -->
+    <aside class="bg-white border-r border-slate-200 p-5 overflow-y-auto" style="max-height: calc(100vh - 60px);">
+      <div class="mb-5">
+        <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider mb-1">Dijital İkiz Kurulumu</div>
+        <h2 class="text-lg font-bold text-slate-900">Çiftliğinizi inşa edin</h2>
+        <p class="text-xs text-slate-500 mt-1">Her seçim sağdaki haritada canlı yapılaşır.</p>
+      </div>
+
+      <!-- Progress -->
+      <div class="mb-5 p-3 rounded-xl bg-emerald-50 border border-emerald-200">
+        <div class="flex items-center justify-between mb-1.5">
+          <span class="text-xs font-bold text-emerald-800">İnşa İlerleme</span>
+          <span class="text-xs font-mono text-emerald-700"><span x-text="buildCount"></span>/8 yapı</span>
+        </div>
+        <div class="h-1.5 bg-emerald-200 rounded-full overflow-hidden">
+          <div class="progress-bar h-full bg-gradient-to-r from-emerald-500 to-emerald-700" :style="`width: ${Math.round(buildCount/8*100)}%`"></div>
+        </div>
+      </div>
+
+      <div class="space-y-5">
+
+        <!-- Ahır tipi -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">🏠 Ahır Tipi</label>
+          <div class="space-y-1.5">
+            <template x-for="opt in opts.barn" :key="opt.id">
+              <button @click="select('barn', opt.id, $event)"
+                :class="state.barn === opt.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'"
+                class="ripple w-full text-left px-3 py-2 rounded-lg border-2 transition flex items-center gap-2">
+                <span class="text-lg" x-text="opt.icon"></span>
+                <span class="text-sm font-semibold text-slate-700" x-text="opt.label"></span>
+                <span x-show="state.barn === opt.id" class="ml-auto text-emerald-600">✓</span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Sağım sistemi -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">🤖 Sağım Sistemi</label>
+          <div class="space-y-1.5">
+            <template x-for="opt in opts.parlor" :key="opt.id">
+              <button @click="select('parlor', opt.id, $event)"
+                :class="state.parlor === opt.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'"
+                class="ripple w-full text-left px-3 py-2 rounded-lg border-2 transition flex items-center gap-2">
+                <span class="text-lg" x-text="opt.icon"></span>
+                <span class="text-sm font-semibold text-slate-700" x-text="opt.label"></span>
+                <span x-show="state.parlor === opt.id" class="ml-auto text-emerald-600">✓</span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Süt tankı -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">🥛 Süt Tankı</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <template x-for="opt in opts.tank" :key="opt.id">
+              <button @click="select('tank', opt.id, $event)"
+                :class="state.tank === opt.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'"
+                class="ripple px-2 py-2 rounded-lg border-2 transition text-center">
+                <div class="text-lg" x-text="opt.icon"></div>
+                <div class="text-[10px] font-semibold text-slate-600 mt-0.5" x-text="opt.label"></div>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Silaj / Yem -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">🌾 Silaj Deposu</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <template x-for="opt in opts.silo" :key="opt.id">
+              <button @click="select('silo', opt.id, $event)"
+                :class="state.silo === opt.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'"
+                class="ripple px-2 py-2 rounded-lg border-2 transition text-center">
+                <div class="text-lg" x-text="opt.icon"></div>
+                <div class="text-[10px] font-semibold text-slate-600 mt-0.5" x-text="opt.label"></div>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Enerji -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">⚡ Enerji Kaynağı</label>
+          <div class="space-y-1.5">
+            <template x-for="opt in opts.energy" :key="opt.id">
+              <button @click="select('energy', opt.id, $event)"
+                :class="state.energy === opt.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'"
+                class="ripple w-full text-left px-3 py-2 rounded-lg border-2 transition flex items-center gap-2">
+                <span class="text-lg" x-text="opt.icon"></span>
+                <span class="text-sm font-semibold text-slate-700" x-text="opt.label"></span>
+                <span x-show="state.energy === opt.id" class="ml-auto text-emerald-600">✓</span>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Su kaynağı -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">💧 Su Kaynağı</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <template x-for="opt in opts.water" :key="opt.id">
+              <button @click="select('water', opt.id, $event)"
+                :class="state.water === opt.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'"
+                class="ripple px-2 py-2 rounded-lg border-2 transition text-center">
+                <div class="text-lg" x-text="opt.icon"></div>
+                <div class="text-[10px] font-semibold text-slate-600 mt-0.5" x-text="opt.label"></div>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Gübre -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">♻️ Atık / Gübre</label>
+          <div class="grid grid-cols-3 gap-1.5">
+            <template x-for="opt in opts.manure" :key="opt.id">
+              <button @click="select('manure', opt.id, $event)"
+                :class="state.manure === opt.id ? 'border-emerald-500 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300'"
+                class="ripple px-2 py-2 rounded-lg border-2 transition text-center">
+                <div class="text-lg" x-text="opt.icon"></div>
+                <div class="text-[10px] font-semibold text-slate-600 mt-0.5" x-text="opt.label"></div>
+              </button>
+            </template>
+          </div>
+        </div>
+
+        <!-- Sürü büyüklüğü -->
+        <div>
+          <label class="block text-xs font-bold text-slate-700 uppercase tracking-wider mb-2">🐄 Sürü Büyüklüğü</label>
+          <div class="px-3 py-2 rounded-lg border-2 border-slate-200">
+            <input type="range" min="0" max="100" step="5" x-model.number="state.herdSize"
+              @input="touchHerd()"
+              class="w-full accent-emerald-600" />
+            <div class="flex justify-between text-xs text-slate-500 mt-1">
+              <span>0</span>
+              <span class="font-bold text-emerald-700 text-sm" x-text="state.herdSize + ' baş'"></span>
+              <span>100+</span>
+            </div>
+          </div>
+        </div>
+
+        <button @click="reset()" class="w-full mt-2 py-2 rounded-lg bg-slate-100 text-slate-600 text-xs font-semibold hover:bg-slate-200 transition">↻ Sıfırla</button>
+      </div>
+    </aside>
+
+    <!-- Iso Stage -->
+    <main class="iso-stage relative overflow-hidden" style="min-height: calc(100vh - 60px);">
+
+      <!-- Sun -->
+      <div class="absolute top-6 right-8 w-16 h-16 rounded-full bg-gradient-to-br from-yellow-200 to-yellow-400 shadow-[0_0_60px_rgba(250,204,21,0.6)] pulse-soft"></div>
+
+      <!-- Title overlay -->
+      <div class="absolute top-6 left-6 z-10">
+        <div class="text-xs font-bold text-emerald-900/70 uppercase tracking-wider">Dijital İkiziniz</div>
+        <div class="text-2xl font-extrabold text-emerald-950" x-text="farmName"></div>
+        <div class="text-xs text-emerald-800/70 mt-1" x-show="buildCount > 0">
+          <span x-text="buildCount"></span> yapı · canlı simülasyon
+        </div>
+      </div>
+
+      <!-- Status bubble -->
+      <div x-show="lastBuild" x-cloak x-transition.opacity
+        class="absolute bottom-6 right-6 bg-white/90 backdrop-blur px-4 py-3 rounded-2xl shadow-lg border border-emerald-200 z-10">
+        <div class="flex items-center gap-2">
+          <span class="text-2xl" x-text="lastBuild?.icon"></span>
+          <div>
+            <div class="text-xs font-bold text-emerald-700 uppercase tracking-wider">İnşa Edildi</div>
+            <div class="text-sm font-semibold text-slate-900" x-text="lastBuild?.label"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- SVG Iso Scene -->
+      <svg viewBox="0 0 900 620" class="absolute inset-0 w-full h-full" preserveAspectRatio="xMidYMid meet">
+
+        <!-- Ground grid (iso tiles) -->
+        <g id="ground">
+          <!-- Big base grass tile -->
+          <polygon points="450,160 800,330 450,500 100,330" fill="#86efac" stroke="#65a30d" stroke-width="2" opacity="0.95"/>
+          <!-- Inner darker patch -->
+          <polygon points="450,200 720,330 450,460 180,330" fill="#a3e635" opacity="0.5"/>
+
+          <!-- Grid lines -->
+          <g stroke="#65a30d" stroke-width="0.5" opacity="0.25">
+            <line x1="275" y1="245" x2="625" y2="245"/>
+            <line x1="190" y1="290" x2="710" y2="290"/>
+            <line x1="190" y1="370" x2="710" y2="370"/>
+            <line x1="275" y1="415" x2="625" y2="415"/>
+            <line x1="365" y1="200" x2="365" y2="450"/>
+            <line x1="450" y1="160" x2="450" y2="500"/>
+            <line x1="535" y1="200" x2="535" y2="450"/>
+          </g>
+
+          <!-- Decorative path -->
+          <path d="M 450,500 Q 600,540 800,560" stroke="#a16207" stroke-width="6" fill="none" opacity="0.4"/>
+
+          <!-- Small bushes / trees around edges -->
+          <g class="cow-bob">
+            <circle cx="120" cy="350" r="14" fill="#15803d" opacity="0.7"/>
+            <circle cx="135" cy="345" r="10" fill="#22c55e" opacity="0.8"/>
+          </g>
+          <g class="cow-bob" style="animation-delay: 1s">
+            <circle cx="800" cy="380" r="14" fill="#15803d" opacity="0.7"/>
+            <circle cx="785" cy="375" r="10" fill="#22c55e" opacity="0.8"/>
+          </g>
+          <g>
+            <circle cx="160" cy="450" r="10" fill="#16a34a" opacity="0.6"/>
+            <circle cx="760" cy="240" r="8" fill="#16a34a" opacity="0.6"/>
+          </g>
+        </g>
+
+        <!-- Energy: power line (back layer) -->
+        <g x-show="state.energy === 'grid' || state.energy === 'mixed'" x-cloak class="build-enter">
+          <line x1="70" y1="280" x2="450" y2="200" stroke="#1e293b" stroke-width="1.5" opacity="0.5"/>
+          <rect x="65" y="240" width="6" height="60" fill="#475569"/>
+          <line x1="62" y1="250" x2="78" y2="250" stroke="#475569" stroke-width="2"/>
+        </g>
+
+        <!-- Solar panels -->
+        <g x-show="state.energy === 'solar' || state.energy === 'mixed'" x-cloak class="build-enter">
+          <g transform="translate(700, 410)">
+            <polygon points="0,0 50,-25 90,-5 40,20" fill="#1e3a8a"/>
+            <polygon points="0,0 50,-25 90,-5 40,20" fill="url(#solarGrad)" opacity="0.7"/>
+            <line x1="15" y1="-7" x2="55" y2="-15" stroke="#1e40af" stroke-width="0.7"/>
+            <line x1="30" y1="-2" x2="70" y2="-10" stroke="#1e40af" stroke-width="0.7"/>
+            <line x1="50" y1="-25" x2="40" y2="20" stroke="#1e40af" stroke-width="0.7"/>
+            <line x1="65" y1="-15" x2="55" y2="10" stroke="#1e40af" stroke-width="0.7"/>
+            <!-- support -->
+            <line x1="30" y1="0" x2="33" y2="20" stroke="#475569" stroke-width="2"/>
+            <line x1="60" y1="10" x2="63" y2="30" stroke="#475569" stroke-width="2"/>
+          </g>
+        </g>
+
+        <!-- Water source -->
+        <g x-show="state.water === 'well'" x-cloak class="build-enter">
+          <g transform="translate(160, 410)">
+            <ellipse cx="0" cy="5" rx="22" ry="11" fill="#7c2d12"/>
+            <ellipse cx="0" cy="0" rx="22" ry="11" fill="#a16207"/>
+            <ellipse cx="0" cy="0" rx="16" ry="7" fill="#1e3a8a"/>
+            <ellipse cx="0" cy="-1" rx="14" ry="6" fill="#3b82f6"/>
+            <rect x="-2" y="-30" width="4" height="30" fill="#92400e"/>
+            <line x1="-12" y1="-20" x2="12" y2="-20" stroke="#92400e" stroke-width="2"/>
+          </g>
+        </g>
+        <g x-show="state.water === 'pond'" x-cloak class="build-enter">
+          <g transform="translate(160, 420)">
+            <ellipse cx="0" cy="0" rx="40" ry="18" fill="#1e3a8a" opacity="0.4"/>
+            <ellipse cx="-2" cy="-2" rx="36" ry="15" fill="#3b82f6"/>
+            <ellipse cx="-2" cy="-3" rx="34" ry="13" fill="#60a5fa" opacity="0.6"/>
+          </g>
+        </g>
+        <g x-show="state.water === 'mains'" x-cloak class="build-enter">
+          <g transform="translate(160, 410)">
+            <rect x="-12" y="-30" width="24" height="32" fill="#64748b"/>
+            <rect x="-10" y="-28" width="20" height="28" fill="#94a3b8"/>
+            <circle cx="0" cy="-14" r="5" fill="#1e3a8a"/>
+            <text x="0" y="-11" text-anchor="middle" font-size="6" fill="white" font-weight="bold">H₂O</text>
+          </g>
+        </g>
+
+        <!-- Silo (silaj) -->
+        <g x-show="state.silo === 'concrete'" x-cloak class="build-enter">
+          <g transform="translate(250, 260)">
+            <ellipse cx="0" cy="80" rx="35" ry="12" fill="#334155"/>
+            <rect x="-35" y="-30" width="70" height="110" fill="#94a3b8"/>
+            <ellipse cx="0" cy="-30" rx="35" ry="12" fill="#cbd5e1"/>
+            <ellipse cx="0" cy="-30" rx="32" ry="10" fill="#16a34a" opacity="0.6"/>
+            <rect x="-3" y="0" width="6" height="80" fill="#475569" opacity="0.3"/>
+          </g>
+        </g>
+        <g x-show="state.silo === 'pile'" x-cloak class="build-enter">
+          <g transform="translate(250, 360)">
+            <ellipse cx="0" cy="20" rx="55" ry="14" fill="#15803d"/>
+            <ellipse cx="0" cy="10" rx="50" ry="22" fill="#16a34a"/>
+            <ellipse cx="0" cy="5" rx="45" ry="20" fill="#22c55e"/>
+            <path d="M -45,10 Q 0,-15 45,10" stroke="#86efac" stroke-width="1" fill="none" opacity="0.5"/>
+          </g>
+        </g>
+        <g x-show="state.silo === 'bale'" x-cloak class="build-enter">
+          <g transform="translate(250, 380)">
+            <ellipse cx="-25" cy="0" rx="20" ry="14" fill="#fde68a"/>
+            <ellipse cx="-25" cy="-3" rx="20" ry="14" fill="#facc15"/>
+            <ellipse cx="20" cy="0" rx="20" ry="14" fill="#fde68a"/>
+            <ellipse cx="20" cy="-3" rx="20" ry="14" fill="#facc15"/>
+            <ellipse cx="0" cy="-22" rx="20" ry="14" fill="#fde68a"/>
+            <ellipse cx="0" cy="-25" rx="20" ry="14" fill="#facc15"/>
+          </g>
+        </g>
+
+        <!-- BARN (main building) -->
+        <g x-show="state.barn === 'free'" x-cloak class="build-enter">
+          <g transform="translate(450, 290)">
+            <!-- shadow -->
+            <ellipse cx="0" cy="105" rx="140" ry="20" fill="black" opacity="0.15"/>
+            <!-- base -->
+            <polygon points="-130,40 -130,90 0,160 130,90 130,40 0,-30" fill="#fef3c7"/>
+            <!-- front face -->
+            <polygon points="-130,40 -130,90 0,160 0,110" fill="#fde68a"/>
+            <!-- side face -->
+            <polygon points="0,110 0,160 130,90 130,40" fill="#fcd34d"/>
+            <!-- Roof -->
+            <polygon points="-130,40 0,-30 130,40 0,40" fill="#dc2626"/>
+            <polygon points="0,-30 130,40 0,40" fill="#b91c1c"/>
+            <!-- Open sides (free-stall) -->
+            <rect x="-115" y="50" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-95" y="60" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-75" y="70" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-55" y="80" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <rect x="-35" y="90" width="10" height="35" fill="#1e293b" opacity="0.6"/>
+            <!-- "free-stall" label -->
+            <text x="0" y="5" text-anchor="middle" font-size="11" fill="#92400e" font-weight="bold">🐄 SERBEST</text>
+          </g>
+        </g>
+        <g x-show="state.barn === 'tie'" x-cloak class="build-enter">
+          <g transform="translate(450, 290)">
+            <ellipse cx="0" cy="105" rx="120" ry="18" fill="black" opacity="0.15"/>
+            <polygon points="-110,40 -110,90 0,150 110,90 110,40 0,-15" fill="#fed7aa"/>
+            <polygon points="-110,40 -110,90 0,150 0,100" fill="#fdba74"/>
+            <polygon points="0,100 0,150 110,90 110,40" fill="#fb923c"/>
+            <polygon points="-110,40 0,-15 110,40 0,40" fill="#7c2d12"/>
+            <polygon points="0,-15 110,40 0,40" fill="#5c1f0a"/>
+            <!-- closed door -->
+            <rect x="-12" y="80" width="24" height="40" fill="#451a03"/>
+            <rect x="-90" y="55" width="14" height="14" fill="#7dd3fc" stroke="#451a03" stroke-width="1"/>
+            <rect x="-65" y="65" width="14" height="14" fill="#7dd3fc" stroke="#451a03" stroke-width="1"/>
+            <text x="0" y="5" text-anchor="middle" font-size="11" fill="#7c2d12" font-weight="bold">🔒 BAĞLI</text>
+          </g>
+        </g>
+        <g x-show="state.barn === 'open'" x-cloak class="build-enter">
+          <g transform="translate(450, 320)">
+            <ellipse cx="0" cy="80" rx="150" ry="18" fill="black" opacity="0.1"/>
+            <!-- open lot fence -->
+            <line x1="-130" y1="60" x2="130" y2="60" stroke="#92400e" stroke-width="3"/>
+            <line x1="-130" y1="80" x2="0" y2="130" stroke="#92400e" stroke-width="3"/>
+            <line x1="130" y1="80" x2="0" y2="130" stroke="#92400e" stroke-width="3"/>
+            <g stroke="#7c2d12" stroke-width="2">
+              <line x1="-120" y1="58" x2="-120" y2="68"/>
+              <line x1="-90" y1="58" x2="-90" y2="68"/>
+              <line x1="-60" y1="58" x2="-60" y2="68"/>
+              <line x1="-30" y1="58" x2="-30" y2="68"/>
+              <line x1="30" y1="58" x2="30" y2="68"/>
+              <line x1="60" y1="58" x2="60" y2="68"/>
+              <line x1="90" y1="58" x2="90" y2="68"/>
+              <line x1="120" y1="58" x2="120" y2="68"/>
+            </g>
+            <!-- shaded canopy -->
+            <polygon points="-40,15 40,15 60,40 -60,40" fill="#7c2d12" opacity="0.7"/>
+            <text x="0" y="100" text-anchor="middle" font-size="11" fill="#451a03" font-weight="bold">🌤 AÇIK PADOK</text>
+          </g>
+        </g>
+
+        <!-- Cooling fans on barn -->
+        <g x-show="(state.barn && state.barn !== 'open')" x-cloak class="build-enter">
+          <g transform="translate(450, 250)">
+            <g class="pulse-soft">
+              <circle cx="-50" cy="0" r="6" fill="#475569"/>
+              <circle cx="-50" cy="0" r="3" fill="#94a3b8"/>
+              <circle cx="50" cy="0" r="6" fill="#475569"/>
+              <circle cx="50" cy="0" r="3" fill="#94a3b8"/>
+            </g>
+          </g>
+        </g>
+
+        <!-- Milking parlor -->
+        <g x-show="state.parlor === 'herringbone'" x-cloak class="build-enter">
+          <g transform="translate(640, 380)">
+            <ellipse cx="0" cy="55" rx="60" ry="10" fill="black" opacity="0.15"/>
+            <polygon points="-55,15 -55,40 0,75 55,40 55,15 0,-15" fill="#bfdbfe"/>
+            <polygon points="-55,15 -55,40 0,75 0,45" fill="#93c5fd"/>
+            <polygon points="0,45 0,75 55,40 55,15" fill="#60a5fa"/>
+            <polygon points="-55,15 0,-15 55,15 0,15" fill="#1d4ed8"/>
+            <polygon points="0,-15 55,15 0,15" fill="#1e40af"/>
+            <text x="0" y="35" text-anchor="middle" font-size="9" fill="#1e3a8a" font-weight="bold">SAĞIM</text>
+          </g>
+        </g>
+        <g x-show="state.parlor === 'robot'" x-cloak class="build-enter">
+          <g transform="translate(640, 380)">
+            <ellipse cx="0" cy="55" rx="45" ry="10" fill="black" opacity="0.15"/>
+            <polygon points="-40,5 -40,40 0,70 40,40 40,5 0,-25" fill="#e0e7ff"/>
+            <polygon points="-40,5 -40,40 0,70 0,35" fill="#c7d2fe"/>
+            <polygon points="0,35 0,70 40,40 40,5" fill="#a5b4fc"/>
+            <polygon points="-40,5 0,-25 40,5 0,5" fill="#4338ca"/>
+            <polygon points="0,-25 40,5 0,5" fill="#312e81"/>
+            <!-- robot arm -->
+            <g class="pulse-soft">
+              <circle cx="-20" cy="20" r="4" fill="#1e293b"/>
+              <line x1="-20" y1="20" x2="0" y2="30" stroke="#1e293b" stroke-width="2"/>
+            </g>
+            <text x="0" y="30" text-anchor="middle" font-size="9" fill="#312e81" font-weight="bold">🤖 ROBOT</text>
+          </g>
+        </g>
+        <g x-show="state.parlor === 'rotary'" x-cloak class="build-enter">
+          <g transform="translate(640, 380)">
+            <ellipse cx="0" cy="55" rx="55" ry="14" fill="black" opacity="0.15"/>
+            <ellipse cx="0" cy="40" rx="50" ry="22" fill="#475569"/>
+            <ellipse cx="0" cy="35" rx="48" ry="20" fill="#94a3b8" class="pulse-soft"/>
+            <ellipse cx="0" cy="35" rx="20" ry="9" fill="#1e293b"/>
+            <text x="0" y="38" text-anchor="middle" font-size="9" fill="#fbbf24" font-weight="bold">⟳</text>
+          </g>
+        </g>
+
+        <!-- Milk tank -->
+        <g x-show="state.tank" x-cloak class="build-enter">
+          <g transform="translate(560, 460)">
+            <ellipse cx="0" cy="22" rx="36" ry="9" fill="black" opacity="0.15"/>
+            <ellipse cx="0" cy="15" rx="34" ry="8" fill="#94a3b8"/>
+            <rect x="-34" y="-15" width="68" height="30" fill="#cbd5e1"/>
+            <ellipse cx="0" cy="-15" rx="34" ry="8" fill="#f1f5f9"/>
+            <ellipse cx="0" cy="-15" rx="30" ry="6" fill="#e2e8f0"/>
+            <rect x="-2" y="-10" width="4" height="20" fill="#475569" opacity="0.3"/>
+            <text x="0" y="3" text-anchor="middle" font-size="8" fill="#1e293b" font-weight="bold" x-text="(state.tank === 'small' ? '🥛 500L' : state.tank === 'medium' ? '🥛 2000L' : '🥛 5000L')"></text>
+          </g>
+        </g>
+
+        <!-- Manure -->
+        <g x-show="state.manure === 'lagoon'" x-cloak class="build-enter">
+          <g transform="translate(340, 480)">
+            <ellipse cx="0" cy="8" rx="50" ry="12" fill="#451a03"/>
+            <ellipse cx="0" cy="3" rx="46" ry="10" fill="#78350f"/>
+            <ellipse cx="0" cy="0" rx="42" ry="8" fill="#92400e"/>
+            <ellipse cx="-10" cy="-1" rx="6" ry="2" fill="#a16207" opacity="0.6"/>
+            <ellipse cx="15" cy="2" rx="5" ry="1.5" fill="#a16207" opacity="0.6"/>
+          </g>
+        </g>
+        <g x-show="state.manure === 'compost'" x-cloak class="build-enter">
+          <g transform="translate(340, 480)">
+            <ellipse cx="0" cy="8" rx="45" ry="11" fill="#451a03"/>
+            <path d="M -40,5 Q 0,-20 40,5 L 40,8 L -40,8 Z" fill="#78350f"/>
+            <path d="M -35,5 Q 0,-15 35,5" stroke="#92400e" stroke-width="2" fill="none"/>
+            <!-- steam -->
+            <g class="smoke">
+              <ellipse cx="-5" cy="-15" rx="6" ry="4" fill="white" opacity="0.6"/>
+            </g>
+            <g class="smoke" style="animation-delay: 1.5s">
+              <ellipse cx="10" cy="-12" rx="5" ry="3" fill="white" opacity="0.6"/>
+            </g>
+          </g>
+        </g>
+        <g x-show="state.manure === 'biogas'" x-cloak class="build-enter">
+          <g transform="translate(340, 470)">
+            <ellipse cx="0" cy="35" rx="35" ry="10" fill="black" opacity="0.15"/>
+            <circle cx="0" cy="5" r="32" fill="#15803d"/>
+            <circle cx="0" cy="5" r="30" fill="#16a34a"/>
+            <circle cx="-8" cy="-2" r="6" fill="#22c55e" opacity="0.6"/>
+            <text x="0" y="10" text-anchor="middle" font-size="9" fill="white" font-weight="bold">⚡ BİYOGAZ</text>
+          </g>
+        </g>
+
+        <!-- Cows (dynamic count) -->
+        <g x-show="state.herdSize > 0" x-cloak>
+          <template x-for="(_, i) in Math.min(Math.ceil(state.herdSize / 5), 20)" :key="'cow-'+i">
+            <g class="cow-bob build-enter" :style="`animation-delay: ${i*0.1}s; transform-origin: center`">
+              <g :transform="`translate(${300 + (i % 6) * 35 + (Math.floor(i/6) % 2 === 1 ? 18 : 0)}, ${390 + Math.floor(i/6) * 25})`">
+                <ellipse cx="0" cy="3" rx="9" ry="2.5" fill="black" opacity="0.2"/>
+                <ellipse cx="0" cy="0" rx="9" ry="5" fill="white"/>
+                <ellipse cx="-2" cy="-1" rx="3" ry="2" fill="#1e293b"/>
+                <ellipse cx="3" cy="1" rx="2.5" ry="1.5" fill="#1e293b"/>
+                <circle cx="-7" cy="-1" r="3" fill="white"/>
+                <circle cx="-8" cy="-2" r="0.5" fill="#1e293b"/>
+              </g>
+            </g>
+          </template>
+        </g>
+
+        <!-- SVG defs -->
+        <defs>
+          <linearGradient id="solarGrad" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stop-color="#60a5fa" stop-opacity="0.8"/>
+            <stop offset="100%" stop-color="#1e40af" stop-opacity="0.4"/>
+          </linearGradient>
+        </defs>
+      </svg>
+
+      <!-- Empty state -->
+      <div x-show="buildCount === 0" x-cloak class="absolute inset-0 flex items-center justify-center pointer-events-none">
+        <div class="bg-white/80 backdrop-blur px-6 py-4 rounded-2xl shadow text-center">
+          <div class="text-4xl mb-2">🏗️</div>
+          <div class="text-sm font-bold text-slate-700">Soldan seçim yapın</div>
+          <div class="text-xs text-slate-500 mt-1">Her seçim çiftliğinize bir yapı ekler</div>
+        </div>
+      </div>
+
+    </main>
+  </div>
+</div>
+
+<script>
+function builder() {
+  return {
+    farmName: 'Yılmaz Süt Çiftliği',
+    state: {
+      barn: null,
+      parlor: null,
+      tank: null,
+      silo: null,
+      energy: null,
+      water: null,
+      manure: null,
+      herdSize: 0
+    },
+    opts: {
+      barn: [
+        { id: 'free', icon: '🏠', label: 'Serbest Dolaşımlı' },
+        { id: 'tie', icon: '🔒', label: 'Bağlı Sistem' },
+        { id: 'open', icon: '🌤', label: 'Açık Padok' }
+      ],
+      parlor: [
+        { id: 'herringbone', icon: '⚙️', label: 'Balık Sırtı (Klasik)' },
+        { id: 'rotary', icon: '🎡', label: 'Karusel (Rotary)' },
+        { id: 'robot', icon: '🤖', label: 'Robotik (AMS)' }
+      ],
+      tank: [
+        { id: 'small', icon: '🥛', label: '500L' },
+        { id: 'medium', icon: '🥛🥛', label: '2000L' },
+        { id: 'large', icon: '🥛🥛🥛', label: '5000L+' }
+      ],
+      silo: [
+        { id: 'concrete', icon: '🏛', label: 'Beton' },
+        { id: 'pile', icon: '🌾', label: 'Yığın' },
+        { id: 'bale', icon: '🌽', label: 'Balya' }
+      ],
+      energy: [
+        { id: 'grid', icon: '⚡', label: 'Sadece Şebeke' },
+        { id: 'solar', icon: '☀️', label: 'Güneş Enerjisi (GES)' },
+        { id: 'mixed', icon: '🔋', label: 'Şebeke + Güneş' }
+      ],
+      water: [
+        { id: 'well', icon: '🪣', label: 'Kuyu' },
+        { id: 'pond', icon: '🏞', label: 'Gölet' },
+        { id: 'mains', icon: '🚰', label: 'Şebeke' }
+      ],
+      manure: [
+        { id: 'lagoon', icon: '🟫', label: 'Lagün' },
+        { id: 'compost', icon: '♻️', label: 'Kompost' },
+        { id: 'biogas', icon: '🟢', label: 'Biyogaz' }
+      ]
+    },
+    lastBuild: null,
+
+    init() {
+      // optional intro
+    },
+
+    get buildCount() {
+      let n = 0;
+      ['barn','parlor','tank','silo','energy','water','manure'].forEach(k => {
+        if (this.state[k]) n++;
+      });
+      if (this.state.herdSize > 0) n++;
+      return n;
+    },
+
+    select(key, value, ev) {
+      const prev = this.state[key];
+      // toggle off if same
+      this.state[key] = (prev === value) ? null : value;
+
+      if (this.state[key]) {
+        const opt = this.opts[key].find(o => o.id === value);
+        this.lastBuild = { icon: opt.icon, label: opt.label };
+        setTimeout(() => { this.lastBuild = null; }, 2500);
+      }
+      // ripple flash
+      if (ev && ev.currentTarget) {
+        ev.currentTarget.classList.remove('flash');
+        void ev.currentTarget.offsetWidth;
+        ev.currentTarget.classList.add('flash');
+      }
+    },
+
+    touchHerd() {
+      // Show small popup
+      if (this.state.herdSize > 0) {
+        this.lastBuild = { icon: '🐄', label: `${this.state.herdSize} baş sürü` };
+        setTimeout(() => { this.lastBuild = null; }, 1800);
+      }
+    },
+
+    reset() {
+      this.state = {
+        barn: null, parlor: null, tank: null, silo: null,
+        energy: null, water: null, manure: null, herdSize: 0
+      };
+      this.lastBuild = null;
+    }
+  }
+}
+</script>
+</body>
+</html>

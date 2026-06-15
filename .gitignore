@@ -1,0 +1,25 @@
+# ---- Dependencies ----
+node_modules/
+
+# ---- Database: CONTAINS PERSONAL DATA (KVKK) — never commit ----
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ---- Secrets & local-only helpers ----
+.env
+.env.local
+.env.*.local
+**/start-test.cmd
+.claude/
+
+# ---- Build artifacts ----
+*.zip
+**/farm-engine/dist/
+*.tsbuildinfo
+
+# ---- Logs & OS junk ----
+*.log
+.DS_Store
+Thumbs.db
