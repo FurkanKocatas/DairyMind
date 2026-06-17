@@ -103,7 +103,7 @@ node -e "console.log(require('crypto').randomBytes(16).toString('base64url'))"
 ```
 Çıktıyı `ADMIN_TOKEN` değeri yap. Kimseyle paylaşma, repoya commit'leme.
 
-> **OTP/SMS notu:** Şu an `/api/resume/request` doğrulama kodunu sadece sunucu log'una yazıyor (SMS gateway henüz bağlı değil). Üretimde gerçek SMS için bir gateway (ör. Netgsm, İletimerkezi, Twilio) entegre edilmeli — kod `server.js` içinde `// TODO SMS` ile işaretli.
+> **OTP/SMS notu:** Onboarding artık **davet-only** (sihirli link). OTP/telefon-resume akışı landing'de **kapalı**; `/api/resume/*` endpoint'leri kodda duruyor ama kullanılmıyor. SMS gateway demo için **gerekmez**. İleride public self-signup + OTP geri istenirse bir gateway (Netgsm/İletimerkezi/Twilio) bağlanmalı (`server.js` içinde `// TODO SMS`).
 
 ## Adım 6 — Klasör İzinleri
 
@@ -131,11 +131,11 @@ Log:
 | URL | Beklenen |
 |-----|----------|
 | `https://yourdomain.com/healthz` | `{"ok":true,"time":"..."}` |
-| `https://yourdomain.com/` | Landing page (Yeni Başla / Devam Et) |
+| `https://yourdomain.com/` | "🔒 Davet ile giriş" notu (public kayıt kapalı) |
 | `https://yourdomain.com/admin` | Şifre kutusu |
 | `https://yourdomain.com/api/provinces` | 81 il JSON |
 
-Admin şifresi gir → liste açılır → **+ Yeni Çiftçi Ekle** çalışmalı.
+Admin şifresi gir → liste açılır → **+ Yeni Çiftçi Ekle** → ad/çiftlik/telefon → "Oluştur & Link Al" → linki kopyala/WhatsApp. O linki başka sekmede aç → KVKK onayı → anket. Onboarding **sadece** bu davet linkiyle olur.
 
 ## Backup
 
@@ -181,8 +181,9 @@ hPanel → Restart.
 - [x] SQL injection güvenli (prepared statements)
 - [x] Server-side input validation (telefon, isim, il) + soru ID allowlist
 - [x] **IDOR korumalı** — her gönderim kendi `access_token`'ı ile okunur/yazılır (başka çiftçinin verisi okunamaz)
-- [x] **OTP resume** — telefon + 6 haneli kod (10 dk geçerli, 5 deneme), enumeration yok
-- [x] **Rate limiting** — in-memory (oluşturma 5/dk, yazma 120/dk, OTP iste 4/dk, doğrula 10/dk, admin 30/dk)
+- [x] **Davet-only onboarding** — public self-signup kapalı (`POST /api/submissions` admin-gated); çiftçi sadece sihirli linkle (`?t=token`) girer
+- [x] **Rate limiting** — in-memory (oluşturma 5/dk, yazma 120/dk, admin/davet 30/dk)
+- [x] **Export güvenli** — JSON export'ta `access_token` temizlenir (dosya paylaşılabilir)
 - [x] **CSV injection** — export'ta formül karakterleri (`=+-@`) nötrleştirilir
 - [x] **KVKK rıza kaydı** — onay + versiyon + zaman damgası, silme endpoint'i (erasure)
 - [x] Merkezi hata middleware (prod'da iç mesaj gizli) + graceful shutdown
